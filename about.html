@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — AetherPixels</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><span class="brand-mark">A</span> AETHERPIXELS</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">🔍</button>
+      <a href="#" class="btn-signin">Sign In</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="index.html">Home</a> / About</div>
+    <h1>About AetherPixels</h1>
+    <p>Why we built a wallpaper library worth bookmarking.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap about-grid">
+    <img src="https://images.unsplash.com/photo-1419833479618-c595710e4f0e?w=900&q=80&auto=format&fit=crop" alt="Neon city street at night">
+    <div class="about-text">
+      <h2>Quality over quantity, always.</h2>
+      <p>AetherPixels started as a small side project: a place to keep the wallpapers we actually wanted to use, instead of digging through ad-stuffed sites for one decent image.</p>
+      <p>Every wallpaper here is checked for resolution, composition, and color before it's added. No watermarks, no upscaled junk, no clutter — just clean, high quality backgrounds for your phone and desktop.</p>
+      <div class="stat-row">
+        <div><b>500+</b><span>Wallpapers</span></div>
+        <div><b>6</b><span>Categories</span></div>
+        <div><b>4K</b><span>Avg. Resolution</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight" id="contact" style="border-top:1px solid rgba(255,255,255,.06)">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">✉️ GET IN TOUCH</div>
+      <h2>Questions, requests, or DMCA?</h2>
+      <p>Drop a message and we'll get back to you within a couple of days.</p>
+    </div>
+    <form class="contact-form" id="contact-form" onsubmit="return handleContact(event)" style="margin:0 auto;">
+      <input type="text" placeholder="Your name" required>
+      <input type="email" placeholder="Your email" required>
+      <textarea placeholder="What's on your mind?" required></textarea>
+      <button type="submit" class="btn btn-gold" style="justify-self:start;">Send Message</button>
+    </form>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand"><span class="brand-mark">A</span> AETHERPIXELS</a>
+        <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
+        <div class="footer-social">
+          <a class="icon-btn" href="#" aria-label="Instagram">📷</a>
+          <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
+          <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
+        </div>
+      </div>
+      <div>
+        <h4>About Us</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Categories</h4>
+        <ul>
+          <li><a href="category.html?cat=cars">Cars</a></li>
+          <li><a href="category.html?cat=nature">Nature</a></li>
+          <li><a href="category.html?cat=space">Space</a></li>
+          <li><a href="category.html?cat=gaming">Gaming</a></li>
+          <li><a href="category.html?cat=abstract">Abstract</a></li>
+          <li><a href="category.html?cat=amoled">AMOLED</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">DMCA</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+<script>
+  function handleContact(e){
+    e.preventDefault();
+    showToast("Message sent! We'll reply soon.");
+    e.target.reset();
+    return false;
+  }
+</script>
+</body>
+</html>
