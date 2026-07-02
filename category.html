@@ -10,13 +10,10 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="34" height="34">
-  <polygon points="18,2 32,10 32,26 18,34 4,26 4,10" fill="#e3a440"/>
-  <polygon points="18,7 28,13 28,23 18,29 8,23 8,13" fill="#1a1305"/>
-  <polygon points="18,10 24,26 22,26 18,16 14,26 12,26" fill="#e3a440"/>
-  <rect x="14.5" y="20.5" width="7" height="2" fill="#e3a440"/>
-  <rect x="25" y="5" width="4" height="4" rx="1" fill="#f0c275" opacity="0.85"/>
-</svg> AETHERPIXELS</a>
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="category.html" class="active">Categories</a></li>
@@ -52,16 +49,13 @@
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="34" height="34">
-  <polygon points="18,2 32,10 32,26 18,34 4,26 4,10" fill="#e3a440"/>
-  <polygon points="18,7 28,13 28,23 18,29 8,23 8,13" fill="#1a1305"/>
-  <polygon points="18,10 24,26 22,26 18,16 14,26 12,26" fill="#e3a440"/>
-  <rect x="14.5" y="20.5" width="7" height="2" fill="#e3a440"/>
-  <rect x="25" y="5" width="4" height="4" rx="1" fill="#f0c275" opacity="0.85"/>
-</svg> AETHERPIXELS</a>
+        <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
         <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
         <div class="footer-social">
-          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" class="social-insta" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
           <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
           <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
         </div>
@@ -99,6 +93,7 @@
   </div>
 </footer>
 
+<script src="db.js"></script>
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
@@ -107,7 +102,8 @@
   }
 
   function buildFilterBar(active){
-    const all = [{id:"all", name:"All", icon:"✨"}, ...CATEGORIES];
+    const cats = window.CATEGORIES || CATEGORIES;
+    const all = [{id:"all", name:"All", icon:"✨"}, ...cats];
     const bar = document.querySelector("#filter-bar");
     bar.innerHTML = all.map(c => `
       <a class="chip ${c.id===active ? 'active':''}" href="category.html?cat=${c.id}">${c.icon||""} ${c.name}</a>
@@ -115,11 +111,13 @@
   }
 
   function loadCategory(){
+    const cats = window.CATEGORIES || CATEGORIES;
+    const wps  = window.WALLPAPERS || WALLPAPERS;
     const cat = getParam("cat") || "all";
     const q = (getParam("q") || "").trim().toLowerCase();
     buildFilterBar(cat);
 
-    const meta = CATEGORIES.find(c => c.id === cat);
+    const meta = cats.find(c => c.id === cat);
 
     if(q){
       document.querySelector("#page-title").textContent = `Search results for "${q}"`;
@@ -131,15 +129,17 @@
         : "Browse every wallpaper, sorted by category.";
     }
 
-    let list = cat === "all" ? WALLPAPERS : WALLPAPERS.filter(w => w.category === cat);
+    let list = cat === "all" ? wps : wps.filter(w => w.category === cat);
     if(q){
       list = list.filter(w => w.title.toLowerCase().includes(q) || w.category.toLowerCase().includes(q));
     }
     renderWallpaperGrid("#wp-grid", list);
   }
 
-  loadCategory();
-  window.addEventListener("popstate", loadCategory);
+  apApplyOverrides().catch(e=>console.error(e)).finally(()=>{
+    loadCategory();
+    window.addEventListener("popstate", loadCategory);
+  });
 </script>
 </body>
 </html>
