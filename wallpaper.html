@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallpaper Preview — AetherPixels</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="34" height="34">
+  <polygon points="18,2 32,10 32,26 18,34 4,26 4,10" fill="#e3a440"/>
+  <polygon points="18,7 28,13 28,23 18,29 8,23 8,13" fill="#1a1305"/>
+  <polygon points="18,10 24,26 22,26 18,16 14,26 12,26" fill="#e3a440"/>
+  <rect x="14.5" y="20.5" width="7" height="2" fill="#e3a440"/>
+  <rect x="25" y="5" width="4" height="4" rx="1" fill="#f0c275" opacity="0.85"/>
+</svg> AETHERPIXELS</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">🔍</button>
+      <a href="#" class="btn-signin">Sign In</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<header class="page-header">
+  <div class="wrap">
+    <div class="breadcrumb" id="breadcrumb"><a href="index.html">Home</a> / Wallpaper</div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap detail-grid" id="detail-root">
+    <!-- filled by JS -->
+  </div>
+</section>
+
+<section class="section section-tight" style="border-top:1px solid rgba(255,255,255,.06)">
+  <div class="wrap">
+    <div class="section-head-row">
+      <div class="section-tag" style="margin-bottom:0;">✨ YOU MIGHT ALSO LIKE</div>
+    </div>
+    <div class="wp-grid" id="related-grid" style="margin-top:24px;"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="34" height="34">
+  <polygon points="18,2 32,10 32,26 18,34 4,26 4,10" fill="#e3a440"/>
+  <polygon points="18,7 28,13 28,23 18,29 8,23 8,13" fill="#1a1305"/>
+  <polygon points="18,10 24,26 22,26 18,16 14,26 12,26" fill="#e3a440"/>
+  <rect x="14.5" y="20.5" width="7" height="2" fill="#e3a440"/>
+  <rect x="25" y="5" width="4" height="4" rx="1" fill="#f0c275" opacity="0.85"/>
+</svg> AETHERPIXELS</a>
+        <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
+        <div class="footer-social">
+          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
+          <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
+        </div>
+      </div>
+      <div>
+        <h4>About Us</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Categories</h4>
+        <ul>
+          <li><a href="category.html?cat=cars">Cars</a></li>
+          <li><a href="category.html?cat=nature">Nature</a></li>
+          <li><a href="category.html?cat=space">Space</a></li>
+          <li><a href="category.html?cat=gaming">Gaming</a></li>
+          <li><a href="category.html?cat=abstract">Abstract</a></li>
+          <li><a href="category.html?cat=amoled">AMOLED</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">DMCA</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+<script>
+  function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
+
+  function loadDetail(){
+    const id = parseInt(getParam("id"), 10);
+    const w = WALLPAPERS.find(x => x.id === id) || WALLPAPERS[0];
+
+    document.title = `${w.title} — AetherPixels`;
+    document.querySelector("#breadcrumb").innerHTML =
+      `<a href="index.html">Home</a> / <a href="category.html?cat=${w.category}">${capitalize(w.category)}</a> / ${w.title}`;
+
+    document.querySelector("#detail-root").innerHTML = `
+      <div class="detail-preview">
+        <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${w.badge}</span>
+        <img src="${w.img}" alt="${w.title}">
+      </div>
+      <div class="detail-info">
+        <h1>${w.title}</h1>
+        <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}</div>
+        <div class="detail-tags">
+          <span>📷 High Resolution</span>
+          <span>🆓 Free to Use</span>
+          <span>🤖 AI Crafted</span>
+        </div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})">⬇ Download Wallpaper</button>
+      </div>
+    `;
+
+    const related = WALLPAPERS.filter(x => x.category === w.category && x.id !== w.id).slice(0,4);
+    renderWallpaperGrid("#related-grid", related.length ? related : WALLPAPERS.filter(x=>x.id!==w.id).slice(0,4));
+  }
+
+  loadDetail();
+</script>
+</body>
+</html>
