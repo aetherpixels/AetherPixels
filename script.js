@@ -125,7 +125,12 @@ async function downloadAs(url, title, mode){
 function loadImageCORS(url){
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Only remote http(s) images need crossOrigin for canvas access.
+    // blob: and data: URLs (admin-uploaded images) must NOT have it set,
+    // or the browser silently fails to load them.
+    if(/^https?:\/\//i.test(url)){
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = url;
