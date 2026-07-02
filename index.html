@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AetherPixels — Premium Wallpapers for Every Screen</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">🔍</button>
+      <a href="#" class="btn-signin">Sign In</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<header class="hero">
+  <div class="hero-bg" style="background-image:url('hero_image.jpeg');background-position:55% 50%;"></div>
+  <div class="hero-fade"></div>
+  <div class="hero-content">
+    <div class="eyebrow">PREMIUM • AI CRAFTED • HIGH QUALITY</div>
+    <h1>PREMIUM WALLPAPERS<br>FOR <span>EVERY SCREEN.</span></h1>
+    <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
+    <div class="hero-actions">
+      <a href="category.html?cat=all" class="btn btn-gold">Explore Wallpapers →</a>
+      <a href="latest.html" class="btn btn-ghost">View Latest ✨</a>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="scroll-pill"></div> Scroll to explore</div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-tag">📦 CATEGORIES</div>
+      <h2>Choose a category to explore wallpapers for your device</h2>
+    </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+</section>
+
+<section class="section section-tight" style="border-top:1px solid rgba(255,255,255,.06)">
+  <div class="wrap">
+    <div class="section-head-row">
+      <div>
+        <div class="section-tag" style="margin-bottom:6px;">📷 LATEST WALLPAPERS</div>
+      </div>
+      <a href="latest.html" class="view-all">View All →</a>
+    </div>
+    <div class="wp-grid" id="latest-grid"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+        <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
+        <div class="footer-social">
+          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" class="social-insta" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
+          <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
+        </div>
+      </div>
+      <div>
+        <h4>About Us</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Categories</h4>
+        <ul>
+          <li><a href="category.html?cat=cars">Cars</a></li>
+          <li><a href="category.html?cat=nature">Nature</a></li>
+          <li><a href="category.html?cat=space">Space</a></li>
+          <li><a href="category.html?cat=gaming">Gaming</a></li>
+          <li><a href="category.html?cat=abstract">Abstract</a></li>
+          <li><a href="category.html?cat=amoled">AMOLED</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">DMCA</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="db.js"></script>
+<script src="data.js"></script>
+<script src="script.js"></script>
+<script>
+  apApplyOverrides().then(()=>{
+    renderCategoryGrid("#cat-grid", CATEGORIES);
+    renderWallpaperGrid("#latest-grid", WALLPAPERS.slice(0,8));
+  });
+</script>
+</body>
+</html>

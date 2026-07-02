@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categories — AetherPixels</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html" class="active">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">🔍</button>
+      <a href="#" class="btn-signin">Sign In</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<header class="page-header">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Categories</div>
+    <h1 id="page-title">All Categories</h1>
+    <p id="page-sub">Browse every wallpaper, sorted by category.</p>
+
+    <div class="filter-bar" id="filter-bar"></div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="wp-grid" id="wp-grid"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+        <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
+        <div class="footer-social">
+          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" class="social-insta" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
+          <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
+        </div>
+      </div>
+      <div>
+        <h4>About Us</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Categories</h4>
+        <ul>
+          <li><a href="category.html?cat=cars">Cars</a></li>
+          <li><a href="category.html?cat=nature">Nature</a></li>
+          <li><a href="category.html?cat=space">Space</a></li>
+          <li><a href="category.html?cat=gaming">Gaming</a></li>
+          <li><a href="category.html?cat=abstract">Abstract</a></li>
+          <li><a href="category.html?cat=amoled">AMOLED</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">DMCA</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="db.js"></script>
+<script src="data.js"></script>
+<script src="script.js"></script>
+<script>
+  function getParam(name){
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  function buildFilterBar(active){
+    const all = [{id:"all", name:"All", icon:"✨"}, ...CATEGORIES];
+    const bar = document.querySelector("#filter-bar");
+    bar.innerHTML = all.map(c => `
+      <a class="chip ${c.id===active ? 'active':''}" href="category.html?cat=${c.id}">${c.icon||""} ${c.name}</a>
+    `).join("");
+  }
+
+  function loadCategory(){
+    const cat = getParam("cat") || "all";
+    const q = (getParam("q") || "").trim().toLowerCase();
+    buildFilterBar(cat);
+
+    const meta = CATEGORIES.find(c => c.id === cat);
+
+    if(q){
+      document.querySelector("#page-title").textContent = `Search results for "${q}"`;
+      document.querySelector("#page-sub").textContent = "Matching wallpapers across all categories.";
+    } else {
+      document.querySelector("#page-title").textContent = meta ? meta.name + " Wallpapers" : "All Categories";
+      document.querySelector("#page-sub").textContent = meta
+        ? `Every ${meta.name.toLowerCase()} wallpaper, ready for mobile and desktop.`
+        : "Browse every wallpaper, sorted by category.";
+    }
+
+    let list = cat === "all" ? WALLPAPERS : WALLPAPERS.filter(w => w.category === cat);
+    if(q){
+      list = list.filter(w => w.title.toLowerCase().includes(q) || w.category.toLowerCase().includes(q));
+    }
+    renderWallpaperGrid("#wp-grid", list);
+  }
+
+  apApplyOverrides().then(()=>{
+    loadCategory();
+    window.addEventListener("popstate", loadCategory);
+  });
+</script>
+</body>
+</html>
