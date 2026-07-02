@@ -190,7 +190,7 @@ function renderCategoryGrid(targetSelector, categories){
   if(!el) return;
   el.innerHTML = categories.map(c => `
     <a class="cat-card" href="category.html?cat=${c.id}">
-      <img src="${c.img}" alt="${c.name} wallpapers" loading="lazy">
+      <img src="${c._resolvedImg || c.img}" alt="${c.name} wallpapers" loading="lazy">
       <div class="cat-info">
         <div class="cat-name"><span>${c.icon}</span> ${c.name}</div>
         <div class="cat-tags">
@@ -203,8 +203,6 @@ function renderCategoryGrid(targetSelector, categories){
 }
 
 // ---------- Render wallpaper grid ----------
-// Clicking the image/title opens the full preview page (wallpaper.html).
-// The Download button opens the Mobile/Desktop picker directly, for convenience.
 function renderWallpaperGrid(targetSelector, wallpapers){
   const el = document.querySelector(targetSelector);
   if(!el) return;
@@ -216,7 +214,7 @@ function renderWallpaperGrid(targetSelector, wallpapers){
     <div class="wp-card">
       <a class="wp-thumb" href="wallpaper.html?id=${w.id}">
         <span class="wp-badge">${w.badge}</span>
-        <img src="${w.img}" alt="${w.title}" loading="lazy">
+        <img src="${w._resolvedImg || w.img}" alt="${w.title}" loading="lazy">
       </a>
       <div class="wp-body">
         <a class="wp-title" href="wallpaper.html?id=${w.id}">${w.title}</a>

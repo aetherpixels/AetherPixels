@@ -41,3 +41,9 @@ const WALLPAPERS = [
   { id:13, title:"Eclipse", category:"amoled", device:"Mobile", img:IMG.amoledThumb, badge:"AMOLED" },
   { id:14, title:"Track Beast", category:"cars", device:"Desktop", img:IMG.heroCar, badge:"4K" }
 ];
+
+// IMPORTANT: const/let at script top-level do NOT become window properties.
+// db.js reads/writes window.WALLPAPERS / window.CATEGORIES, so we expose them explicitly.
+window.IMG = IMG;
+window.CATEGORIES = CATEGORIES;
+window.WALLPAPERS = WALLPAPERS;

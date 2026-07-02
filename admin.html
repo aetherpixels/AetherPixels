@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — AetherPixels</title>
+<style>
+:root{
+  --bg:#0a0a0c;--bg2:#111114;--card:#15151a;--border:#26262d;
+  --text:#f2f1ec;--muted:#9a99a3;--gold:#e3a440;--goldsft:#f0c275;
+  --red:#e85454;--green:#4caf6e;--r:12px;--sw:248px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+button,input,textarea,select{font-family:inherit;font-size:inherit;}
+img{display:block;max-width:100%;}
+
+/* ── Login ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%,rgba(227,164,64,.09) 0%,var(--bg) 60%);}
+.lcard{width:100%;max-width:390px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:42px 34px;text-align:center;}
+.llogo{width:80px;height:80px;border-radius:16px;overflow:hidden;margin:0 auto 18px;}
+.llogo img{width:100%;height:100%;object-fit:cover;}
+.lcard h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+.lcard .sub{color:var(--muted);font-size:13.5px;margin-bottom:30px;}
+.field{position:relative;margin-bottom:13px;text-align:left;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:7px;}
+.field input{width:100%;padding:13px 44px 13px 16px;background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;color:#fff;font-size:14.5px;}
+.field input:focus{outline:none;border-color:var(--gold);}
+.eye{position:absolute;right:14px;bottom:13px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;}
+.lbtn{width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,var(--goldsft),var(--gold));
+  color:#1a1305;font-weight:800;font-size:15px;border:none;cursor:pointer;margin-top:6px;}
+.lbtn:hover{opacity:.9;}
+.lerr{color:var(--red);font-size:13px;margin-top:12px;display:none;}
+
+/* ── App shell ── */
+#admin-app{display:none;min-height:100vh;flex-direction:row;}
+#admin-app.visible{display:flex;}
+
+/* ── Sidebar ── */
+.sb{width:var(--sw);background:var(--bg2);border-right:1px solid var(--border);
+  position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;
+  z-index:50;overflow-y:auto;transition:transform .28s ease;}
+.sb-brand{padding:18px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;}
+.sb-brand img{height:36px;width:36px;object-fit:cover;border-radius:8px;}
+.sb-brand span{font-weight:800;font-size:13px;letter-spacing:.06em;}
+.sb-body{padding:10px 8px;flex:1;}
+.sb-section{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.14em;
+  padding:14px 10px 6px;margin-top:4px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:9px;
+  font-size:13.5px;font-weight:600;color:#d6d5dc;cursor:pointer;margin-bottom:2px;
+  transition:background .15s,color .15s;border:1px solid transparent;}
+.sb-item:hover{background:rgba(227,164,64,.08);color:#fff;}
+.sb-item.active{background:rgba(227,164,64,.14);color:var(--gold);border-color:rgba(227,164,64,.2);}
+.sb-item .ico{font-size:16px;width:20px;text-align:center;}
+.sb-foot{padding:12px 8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.prev-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);font-size:13px;font-weight:600;color:#d6d5dc;}
+.prev-btn:hover{border-color:var(--gold);color:var(--gold);}
+.logout-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:10px;border-radius:9px;background:rgba(232,84,84,.08);border:1px solid rgba(232,84,84,.22);
+  color:var(--red);font-size:13px;font-weight:600;cursor:pointer;}
+.logout-btn:hover{background:rgba(232,84,84,.16);}
+
+/* Mobile topbar */
+.mob-bar{display:none;position:fixed;top:0;left:0;right:0;height:60px;background:var(--bg2);
+  border-bottom:1px solid var(--border);z-index:60;align-items:center;padding:0 16px;gap:12px;}
+.mob-bar img{height:32px;width:32px;border-radius:7px;}
+.mob-bar span{font-weight:800;font-size:13px;flex:1;}
+.mob-tog{background:none;border:1px solid var(--border);color:#fff;width:34px;height:34px;border-radius:8px;font-size:18px;cursor:pointer;}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:49;}
+
+/* ── Main ── */
+.adm-main{margin-left:var(--sw);flex:1;padding:32px;min-height:100vh;}
+
+/* ── Sections ── */
+.tab{display:none;}.tab.active{display:block;}
+.sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:26px;}
+.sec-hdr h2{font-size:21px;font-weight:800;}
+.sec-hdr p{color:var(--muted);font-size:13px;margin-top:3px;}
+
+/* ── Stat row ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;}
+.stat .n{font-size:28px;font-weight:800;color:var(--gold);}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* ── Cards ── */
+.acard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px;}
+.acard h3{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+/* ── Forms ── */
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:7px;}
+.fg input,.fg textarea,.fg select{width:100%;padding:11px 14px;background:var(--bg);
+  border:1px solid var(--border);border-radius:9px;color:#fff;font-size:13.5px;}
+.fg textarea{min-height:90px;resize:vertical;}
+.fg input:focus,.fg textarea:focus,.fg select:focus{outline:none;border-color:var(--gold);}
+.fg select option{background:var(--card);}
+.row2{display:flex;gap:12px;}.row2 .fg{flex:1;}
+
+/* ── Buttons ── */
+.btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;border:none;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:opacity .15s,transform .15s;}
+.btn:hover{opacity:.9;transform:translateY(-1px);}
+.btn-gold{background:linear-gradient(135deg,var(--goldsft),var(--gold));color:#1a1305;}
+.btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-danger{background:rgba(232,84,84,.1);color:var(--red);border:1px solid rgba(232,84,84,.25);}
+.btn-danger:hover{background:rgba(232,84,84,.2);}
+.btn-sm{padding:7px 13px;font-size:12px;}
+.btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+
+/* ── Upload zone ── */
+.upzone{border:2px dashed var(--border);border-radius:12px;padding:18px;text-align:center;
+  cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden;}
+.upzone:hover,.upzone.drag{border-color:var(--gold);background:rgba(227,164,64,.04);}
+.upzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upzone .ico{font-size:28px;margin-bottom:8px;}
+.upzone .hint{color:var(--muted);font-size:12.5px;}
+.upzone .hint b{display:block;color:#d6d5dc;font-size:13px;margin-bottom:4px;}
+.up-preview{width:100%;border-radius:8px;object-fit:cover;max-height:220px;
+  margin-bottom:10px;display:none;}
+.up-preview.show{display:block;}
+
+/* ── Wallpaper grid ── */
+.wp-grid-adm{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;margin-top:6px;}
+.wac{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.wac-thumb{position:relative;aspect-ratio:3/4;overflow:hidden;}
+.wac-thumb img{width:100%;height:100%;object-fit:cover;}
+.wac-badge{position:absolute;top:7px;left:7px;background:rgba(8,8,10,.8);
+  border:1px solid rgba(255,255,255,.12);color:#fff;font-size:10px;font-weight:700;
+  padding:3px 7px;border-radius:5px;}
+.wac-body{padding:11px;}
+.wac-title{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.wac-meta{font-size:11px;color:var(--muted);margin-bottom:9px;}
+.wac-acts{display:flex;gap:6px;}
+
+/* ── Category list ── */
+.cat-list{display:flex;flex-direction:column;gap:10px;}
+.cat-row{display:flex;align-items:center;gap:14px;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;padding:13px;}
+.cat-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;background:var(--bg);flex-shrink:0;}
+.cat-info{flex:1;}
+.cat-name{font-weight:700;font-size:14px;}
+.cat-meta{color:var(--muted);font-size:11.5px;margin-top:2px;}
+.cat-acts{display:flex;gap:8px;flex-shrink:0;}
+
+/* ── Modal ── */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .25s;}
+.moverlay.show{opacity:1;pointer-events:auto;}
+.mbox{background:#15151a;border:1px solid var(--border);border-radius:16px;
+  padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;
+  transform:scale(.94);transition:transform .25s;}
+.moverlay.show .mbox{transform:scale(1);}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.mhdr h3{font-size:17px;font-weight:800;}
+.mcls{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);
+  border:1px solid var(--border);color:#fff;cursor:pointer;}
+.mcls:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:#1c1c22;border:1px solid var(--gold);color:#fff;
+  padding:12px 24px;border-radius:999px;font-size:13.5px;font-weight:600;
+  opacity:0;pointer-events:none;transition:all .3s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── Confirm ── */
+.cbox{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;
+  display:none;align-items:center;justify-content:center;}
+.cbox.show{display:flex;}
+.ccard{background:#15151a;border:1px solid var(--border);border-radius:14px;
+  padding:28px;width:300px;text-align:center;}
+.ccard h4{font-size:16px;font-weight:700;margin-bottom:8px;}
+.ccard p{color:var(--muted);font-size:13px;margin-bottom:22px;}
+.cbts{display:flex;gap:10px;justify-content:center;}
+
+/* Search bar */
+.search-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:180px;padding:10px 14px;background:var(--card);
+  border:1px solid var(--border);border-radius:9px;color:#fff;font-size:13.5px;}
+.search-bar input:focus{outline:none;border-color:var(--gold);}
+
+@media(max-width:768px){
+  .sb{transform:translateX(-100%);}
+  .sb.open{transform:translateX(0);}
+  .mob-bar{display:flex;}
+  .sb-backdrop{display:block;}
+  .adm-main{margin-left:0;padding:20px;padding-top:76px;}
+  .g2{grid-template-columns:1fr;}
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .row2{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN ─── -->
+<div id="login-screen">
+  <div class="lcard">
+    <div class="llogo"><img src="logo.png" alt="AetherPixels"></div>
+    <h1>Admin Panel</h1>
+    <p class="sub">Enter your password to manage AetherPixels</p>
+    <div class="field">
+      <label>PASSWORD</label>
+      <input type="password" id="pwd-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye" onclick="togglePwd()" id="eye-btn">👁</button>
+    </div>
+    <button class="lbtn" onclick="doLogin()">🔓 Login to Admin</button>
+    <div class="lerr" id="lerr">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- ─── ADMIN APP ─── -->
+<div id="admin-app">
+
+  <!-- Mobile topbar -->
+  <div class="mob-bar">
+    <img src="logo.png" alt="Logo">
+    <span>AETHERPIXELS ADMIN</span>
+    <button class="mob-tog" onclick="toggleSidebar()">☰</button>
+  </div>
+  <div class="sb-backdrop" id="sb-bd" onclick="toggleSidebar(false)" style="display:none"></div>
+
+  <!-- Sidebar -->
+  <aside class="sb" id="sidebar">
+    <div class="sb-brand">
+      <img src="logo.png" alt="Logo">
+      <span>AETHERPIXELS</span>
+    </div>
+    <div class="sb-body">
+      <div class="sb-section">MANAGE</div>
+      <div class="sb-item active" onclick="showTab('dashboard')"><span class="ico">📊</span> Dashboard</div>
+      <div class="sb-item" onclick="showTab('hero')"><span class="ico">🖼️</span> Hero Section</div>
+      <div class="sb-item" onclick="showTab('wallpapers')"><span class="ico">🎨</span> Wallpapers</div>
+      <div class="sb-item" onclick="showTab('categories')"><span class="ico">📁</span> Categories</div>
+      <div class="sb-section">PAGES</div>
+      <div class="sb-item" onclick="showTab('about')"><span class="ico">📄</span> About Page</div>
+      <div class="sb-item" onclick="showTab('social')"><span class="ico">🔗</span> Social & Contact</div>
+      <div class="sb-item" onclick="showTab('settings')"><span class="ico">⚙️</span> Site Settings</div>
+    </div>
+    <div class="sb-foot">
+      <a href="index.html" target="_blank" class="prev-btn">👁 Preview Site</a>
+      <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="adm-main">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="tab active" id="tab-dashboard">
+      <div class="sec-hdr">
+        <div><h2>👋 Welcome back</h2><p>Here's an overview of your AetherPixels site.</p></div>
+      </div>
+      <div class="stat-row" id="dash-stats"></div>
+      <div class="g2">
+        <div class="acard">
+          <h3>⚡ Quick Actions</h3>
+          <div style="display:flex;flex-direction:column;gap:9px;">
+            <button class="btn btn-gold" onclick="showTab('wallpapers');openWpModal()">+ Add New Wallpaper</button>
+            <button class="btn btn-ghost" onclick="showTab('hero')">✏️ Edit Hero Section</button>
+            <button class="btn btn-ghost" onclick="showTab('social')">🔗 Update Social Links</button>
+            <a href="index.html" target="_blank" class="btn btn-ghost">👁 Preview Live Site</a>
+          </div>
+        </div>
+        <div class="acard">
+          <h3>📋 Recent Wallpapers</h3>
+          <div id="dash-recent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── HERO ─── -->
+    <div class="tab" id="tab-hero">
+      <div class="sec-hdr">
+        <div><h2>🖼️ Hero Section</h2><p>Customize the main banner on the homepage.</p></div>
+        <button class="btn btn-gold" onclick="saveHero()">💾 Save Hero</button>
+      </div>
+      <div class="g2">
+        <div class="acard">
+          <h3>🖼️ Hero Image</h3>
+          <div class="upzone" id="hero-zone" ondragover="onDrag(event,this)" ondragleave="offDrag(event,this)" ondrop="onDrop(event,'hero-zone','hero-img-prev','hero_upload')">
+            <img class="up-preview" id="hero-img-prev" alt="Hero preview">
+            <div class="ico">📸</div>
+            <div class="hint"><b>Click or drag to upload</b>Recommended: 1920×1080 or wider</div>
+            <input type="file" accept="image/*" onchange="handleUpload(this,'hero-img-prev','hero_upload','hero-zone')">
+          </div>
+          <p style="color:var(--muted);font-size:12px;margin-top:10px;">Current image: <span id="hero-img-status">Default</span></p>
+        </div>
+        <div class="acard">
+          <h3>✏️ Hero Text</h3>
+          <div class="fg"><label>EYEBROW TEXT</label><input id="h-eyebrow" placeholder="PREMIUM • AI CRAFTED • HIGH QUALITY"></div>
+          <div class="fg"><label>HEADLINE LINE 1</label><input id="h-line1" placeholder="PREMIUM WALLPAPERS"></div>
+          <div class="fg"><label>HEADLINE LINE 2 (gold highlight)</label><input id="h-line2" placeholder="FOR EVERY SCREEN."></div>
+          <div class="fg"><label>SUBTITLE</label><textarea id="h-sub" rows="3" placeholder="Handpicked high quality wallpapers..."></textarea></div>
+          <div class="row2">
+            <div class="fg"><label>BUTTON 1 TEXT</label><input id="h-btn1" placeholder="Explore Wallpapers →"></div>
+            <div class="fg"><label>BUTTON 2 TEXT</label><input id="h-btn2" placeholder="View Latest ✨"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── WALLPAPERS ─── -->
+    <div class="tab" id="tab-wallpapers">
+      <div class="sec-hdr">
+        <div><h2>🎨 Wallpapers</h2><p>Add, edit or remove wallpapers from your collection.</p></div>
+        <button class="btn btn-gold" onclick="openWpModal()">+ Add Wallpaper</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="wp-search" placeholder="Search wallpapers..." oninput="filterWallpapers()">
+        <select id="wp-filter-cat" onchange="filterWallpapers()" style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:#fff;">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+      <div class="wp-grid-adm" id="wp-admin-grid"></div>
+    </div>
+
+    <!-- ─── CATEGORIES ─── -->
+    <div class="tab" id="tab-categories">
+      <div class="sec-hdr">
+        <div><h2>📁 Categories</h2><p>Manage wallpaper categories shown on the homepage.</p></div>
+        <button class="btn btn-gold" onclick="openCatModal()">+ Add Category</button>
+      </div>
+      <div class="cat-list" id="cat-admin-list"></div>
+    </div>
+
+    <!-- ─── ABOUT ─── -->
+    <div class="tab" id="tab-about">
+      <div class="sec-hdr">
+        <div><h2>📄 About Page</h2><p>Edit your story and stats.</p></div>
+        <button class="btn btn-gold" onclick="saveAbout()">💾 Save About</button>
+      </div>
+      <div class="g2">
+        <div class="acard">
+          <h3>🖼️ About Image</h3>
+          <div class="upzone" id="about-zone" ondragover="onDrag(event,this)" ondragleave="offDrag(event,this)" ondrop="onDrop(event,'about-zone','about-img-prev','about_upload')">
+            <img class="up-preview" id="about-img-prev" alt="About preview">
+            <div class="ico">🌃</div>
+            <div class="hint"><b>Click or drag to upload</b>Landscape image works best</div>
+            <input type="file" accept="image/*" onchange="handleUpload(this,'about-img-prev','about_upload','about-zone')">
+          </div>
+        </div>
+        <div class="acard">
+          <h3>✏️ About Content</h3>
+          <div class="fg"><label>HEADING</label><input id="a-h2" placeholder="Quality over quantity, always."></div>
+          <div class="fg"><label>PARAGRAPH 1</label><textarea id="a-p1"></textarea></div>
+          <div class="fg"><label>PARAGRAPH 2</label><textarea id="a-p2"></textarea></div>
+        </div>
+      </div>
+      <div class="acard">
+        <h3>📊 Stats Strip</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+          <div class="fg"><label>WALLPAPER COUNT</label><input id="a-stat1" type="number" placeholder="500"></div>
+          <div class="fg"><label>CATEGORIES COUNT</label><input id="a-stat2" type="number" placeholder="6"></div>
+          <div class="fg"><label>RESOLUTION LABEL</label><input id="a-stat3" placeholder="4K"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SOCIAL ─── -->
+    <div class="tab" id="tab-social">
+      <div class="sec-hdr">
+        <div><h2>🔗 Social & Contact</h2><p>Update your social links and contact email.</p></div>
+        <button class="btn btn-gold" onclick="saveSocial()">💾 Save Links</button>
+      </div>
+      <div class="acard">
+        <h3>📱 Social Media</h3>
+        <div class="g2">
+          <div class="fg"><label>INSTAGRAM URL</label><input id="s-ig" placeholder="https://www.instagram.com/aether_pixels_"></div>
+          <div class="fg"><label>TWITTER / X URL</label><input id="s-tw" placeholder="https://twitter.com/aetherpixels"></div>
+          <div class="fg"><label>PINTEREST URL</label><input id="s-pt" placeholder="https://pinterest.com/aetherpixels"></div>
+          <div class="fg"><label>CONTACT EMAIL (Gmail)</label><input id="s-gmail" placeholder="aetherpixels1@gmail.com"></div>
+        </div>
+      </div>
+      <div class="acard">
+        <h3>📲 Preview</h3>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <a id="prev-ig" href="#" target="_blank" class="btn btn-ghost btn-sm">📷 Instagram</a>
+          <a id="prev-tw" href="#" target="_blank" class="btn btn-ghost btn-sm">🐦 Twitter / X</a>
+          <a id="prev-pt" href="#" target="_blank" class="btn btn-ghost btn-sm">📌 Pinterest</a>
+          <a id="prev-gmail" href="#" class="btn btn-ghost btn-sm">✉️ Gmail</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SETTINGS ─── -->
+    <div class="tab" id="tab-settings">
+      <div class="sec-hdr">
+        <div><h2>⚙️ Site Settings</h2><p>Global settings that apply across every page.</p></div>
+        <button class="btn btn-gold" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+      <div class="acard">
+        <h3>🌐 General</h3>
+        <div class="g2">
+          <div class="fg"><label>SITE NAME</label><input id="cfg-name" placeholder="AETHERPIXELS"></div>
+          <div class="fg"><label>TAGLINE</label><input id="cfg-tag" placeholder="Premium Wallpapers for Every Screen"></div>
+          <div class="fg"><label>FOOTER COPYRIGHT TEXT</label><input id="cfg-copy" placeholder="© 2026 AetherPixels. All rights reserved."></div>
+        </div>
+      </div>
+      <div class="acard" style="border-color:rgba(232,84,84,.3);">
+        <h3 style="color:var(--red);">⚠️ Danger Zone</h3>
+        <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">This will reset ALL admin changes back to defaults. Cannot be undone.</p>
+        <button class="btn btn-danger" onclick="confirmReset()">🗑️ Reset All to Defaults</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── Wallpaper Modal ─── -->
+<div class="moverlay" id="wp-modal">
+  <div class="mbox">
+    <div class="mhdr">
+      <h3 id="wm-title">Add Wallpaper</h3>
+      <button class="mcls" onclick="closeModal('wp-modal')">✕</button>
+    </div>
+    <div class="upzone" id="wm-zone" ondragover="onDrag(event,this)" ondragleave="offDrag(event,this)" ondrop="onDrop(event,'wm-zone','wm-prev','wm_upload')">
+      <img class="up-preview" id="wm-prev" alt="Wallpaper preview">
+      <div class="ico">🖼️</div>
+      <div class="hint"><b>Click or drag image here</b>JPG/PNG/WebP · Any resolution</div>
+      <input type="file" accept="image/*" onchange="handleUpload(this,'wm-prev','wm_upload','wm-zone')">
+    </div>
+    <div class="fg" style="margin-top:14px;"><label>TITLE</label><input id="wm-name" placeholder="Wallpaper title"></div>
+    <div class="row2">
+      <div class="fg">
+        <label>CATEGORY</label>
+        <select id="wm-cat"></select>
+      </div>
+      <div class="fg">
+        <label>DEVICE FIT</label>
+        <select id="wm-dev">
+          <option value="Desktop">Desktop</option>
+          <option value="Mobile">Mobile</option>
+          <option value="Both">Both</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>BADGE</label>
+      <select id="wm-badge">
+        <option value="4K">4K</option>
+        <option value="HD">HD</option>
+        <option value="AMOLED">AMOLED</option>
+        <option value="FHD">FHD</option>
+      </select>
+    </div>
+    <input type="hidden" id="wm-edit-id" value="">
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="saveWpModal()">💾 Save Wallpaper</button>
+      <button class="btn btn-ghost" onclick="closeModal('wp-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Category Modal ─── -->
+<div class="moverlay" id="cat-modal">
+  <div class="mbox">
+    <div class="mhdr">
+      <h3 id="cm-title">Add Category</h3>
+      <button class="mcls" onclick="closeModal('cat-modal')">✕</button>
+    </div>
+    <div class="upzone" id="cm-zone" ondragover="onDrag(event,this)" ondragleave="offDrag(event,this)" ondrop="onDrop(event,'cm-zone','cm-prev','cm_upload')">
+      <img class="up-preview" id="cm-prev" alt="Category preview">
+      <div class="ico">🗂️</div>
+      <div class="hint"><b>Click or drag thumbnail</b>Used as category card background</div>
+      <input type="file" accept="image/*" onchange="handleUpload(this,'cm-prev','cm_upload','cm-zone')">
+    </div>
+    <div class="row2" style="margin-top:14px;">
+      <div class="fg"><label>CATEGORY NAME</label><input id="cm-name" placeholder="e.g. Cars"></div>
+      <div class="fg"><label>EMOJI ICON</label><input id="cm-icon" placeholder="🚗" maxlength="4" style="font-size:22px;text-align:center;"></div>
+    </div>
+    <input type="hidden" id="cm-edit-id" value="">
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="saveCatModal()">💾 Save Category</button>
+      <button class="btn btn-ghost" onclick="closeModal('cat-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Confirm Dialog ─── -->
+<div class="cbox" id="confirm-box">
+  <div class="ccard">
+    <h4 id="confirm-title">Are you sure?</h4>
+    <p id="confirm-msg">This cannot be undone.</p>
+    <div class="cbts">
+      <button class="btn btn-danger" id="confirm-yes">Delete</button>
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast ─── -->
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script src="data.js"></script>
+<script>
+// ─── AUTH ───────────────────────────────────────────────
+const PW = "om_sankesara652008";
+
+function doLogin(){
+  const v = document.getElementById('pwd-input').value;
+  if(v === PW){
+    sessionStorage.setItem('ap_admin','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-app').classList.add('visible');
+    initAdminApp();
+  } else {
+    const e = document.getElementById('lerr');
+    e.style.display='block';
+    document.getElementById('pwd-input').value='';
+    setTimeout(()=>e.style.display='none',3000);
+  }
+}
+
+function togglePwd(){
+  const i = document.getElementById('pwd-input');
+  i.type = i.type==='password' ? 'text' : 'password';
+}
+
+function doLogout(){
+  sessionStorage.removeItem('ap_admin');
+  location.reload();
+}
+
+// ─── INIT ────────────────────────────────────────────────
+function initAdminApp(){
+  loadAllFromStorage();
+  loadDashboard();
+  loadHeroTab();
+  loadWallpapersTab();
+  loadCategoriesTab();
+  loadAboutTab();
+  loadSocialTab();
+  loadSettingsTab();
+  loadHeroPreview();
+  loadAboutPreview();
+}
+
+// current working copies
+let adminWP  = [];
+let adminCAT = [];
+let adminCFG = {};
+
+function loadAllFromStorage(){
+  adminWP  = apGetSettings('wallpapers',  WALLPAPERS).map(w=>({...w}));
+  adminCAT = apGetSettings('categories', CATEGORIES).map(c=>({...c}));
+  adminCFG = apGetSettings('siteSettings', {});
+}
+
+// ─── SIDEBAR / TABS ──────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelector(`.sb-item[onclick*="${name}"]`)?.classList.add('active');
+  if(name==='wallpapers') renderWpGrid(adminWP);
+  if(name==='categories') renderCatList();
+  closeSidebar();
+}
+
+function toggleSidebar(force){
+  const sb=document.getElementById('sidebar');
+  const bd=document.getElementById('sb-bd');
+  const open=typeof force==='boolean'?force:!sb.classList.contains('open');
+  sb.classList.toggle('open',open);
+  bd.style.display=open?'block':'none';
+}
+function closeSidebar(){ toggleSidebar(false); }
+
+// ─── DASHBOARD ───────────────────────────────────────────
+function loadDashboard(){
+  const stats = document.getElementById('dash-stats');
+  stats.innerHTML = `
+    <div class="stat"><div class="n">${adminWP.length}</div><div class="l">Wallpapers</div></div>
+    <div class="stat"><div class="n">${adminCAT.length}</div><div class="l">Categories</div></div>
+    <div class="stat"><div class="n">${[...new Set(adminWP.map(w=>w.category))].length}</div><div class="l">Active Cats</div></div>
+    <div class="stat"><div class="n">4K</div><div class="l">Avg Quality</div></div>`;
+
+  const recent = document.getElementById('dash-recent');
+  recent.innerHTML = adminWP.slice(-4).reverse().map(w=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <img src="${w._resolvedImg||w.img||''}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+      <div style="flex:1;overflow:hidden;">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.title}</div>
+        <div style="font-size:11px;color:var(--muted);">${w.category} · ${w.device}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ─── HERO ────────────────────────────────────────────────
+function loadHeroTab(){
+  const s = adminCFG;
+  document.getElementById('h-eyebrow').value = s.heroEyebrow||'PREMIUM • AI CRAFTED • HIGH QUALITY';
+  document.getElementById('h-line1').value   = s.heroH1Line1||'PREMIUM WALLPAPERS';
+  document.getElementById('h-line2').value   = s.heroH1Line2||'FOR EVERY SCREEN.';
+  document.getElementById('h-sub').value     = s.heroSubtitle||'Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure Aesthetic.';
+  document.getElementById('h-btn1').value    = s.btn1Text||'Explore Wallpapers →';
+  document.getElementById('h-btn2').value    = s.btn2Text||'View Latest ✨';
+}
+
+async function loadHeroPreview(){
+  const url = await apGetImage('hero_upload');
+  if(url){
+    const p = document.getElementById('hero-img-prev');
+    p.src=url; p.classList.add('show');
+    document.getElementById('hero-img-status').textContent='Custom upload ✓';
+  }
+}
+
+function saveHero(){
+  adminCFG.heroEyebrow  = document.getElementById('h-eyebrow').value;
+  adminCFG.heroH1Line1  = document.getElementById('h-line1').value;
+  adminCFG.heroH1Line2  = document.getElementById('h-line2').value;
+  adminCFG.heroSubtitle = document.getElementById('h-sub').value;
+  adminCFG.btn1Text     = document.getElementById('h-btn1').value;
+  adminCFG.btn2Text     = document.getElementById('h-btn2').value;
+  apSaveSettings('siteSettings', adminCFG);
+  toast('✅ Hero section saved!');
+}
+
+// ─── WALLPAPERS ──────────────────────────────────────────
+let wpImgPending = null; // blob for the current modal upload
+
+async function loadWallpapersTab(){
+  // resolve db: images
+  for(const w of adminWP){
+    if(!w._resolvedImg){
+      w._resolvedImg = w.img&&w.img.startsWith('db:')
+        ? await apGetImage(w.img.slice(3)) || '' : w.img||'';
+    }
+  }
+  // populate category filter
+  const sel = document.getElementById('wp-filter-cat');
+  sel.innerHTML = '<option value="all">All Categories</option>' +
+    adminCAT.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  renderWpGrid(adminWP);
+}
+
+function filterWallpapers(){
+  const q   = document.getElementById('wp-search').value.toLowerCase();
+  const cat = document.getElementById('wp-filter-cat').value;
+  const filtered = adminWP.filter(w=>
+    (cat==='all'||w.category===cat) &&
+    (w.title.toLowerCase().includes(q)||w.category.toLowerCase().includes(q))
+  );
+  renderWpGrid(filtered);
+}
+
+function renderWpGrid(list){
+  const el = document.getElementById('wp-admin-grid');
+  if(!list.length){el.innerHTML='<p style="color:var(--muted);grid-column:1/-1;padding:30px 0;text-align:center;">No wallpapers found.</p>';return;}
+  el.innerHTML = list.map(w=>`
+    <div class="wac">
+      <div class="wac-thumb">
+        <span class="wac-badge">${w.badge||'4K'}</span>
+        <img src="${w._resolvedImg||w.img||''}" alt="${w.title}" loading="lazy"
+          onerror="this.src='';this.style.background='#1a1a22'">
+      </div>
+      <div class="wac-body">
+        <div class="wac-title">${w.title}</div>
+        <div class="wac-meta">${capitalize(w.category)} · ${w.device}</div>
+        <div class="wac-acts">
+          <button class="btn btn-ghost btn-sm" onclick="openWpModal(${w.id})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteWp(${w.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openWpModal(id){
+  wpImgPending=null;
+  const modal=document.getElementById('wp-modal');
+  const prev=document.getElementById('wm-prev');
+  prev.classList.remove('show'); prev.src='';
+
+  // Populate category dropdown
+  document.getElementById('wm-cat').innerHTML=
+    adminCAT.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
+  if(id){
+    const w=adminWP.find(x=>x.id===id);
+    if(!w) return;
+    document.getElementById('wm-title').textContent='Edit Wallpaper';
+    document.getElementById('wm-edit-id').value=id;
+    document.getElementById('wm-name').value=w.title;
+    document.getElementById('wm-cat').value=w.category;
+    document.getElementById('wm-dev').value=w.device;
+    document.getElementById('wm-badge').value=w.badge||'4K';
+    if(w._resolvedImg){prev.src=w._resolvedImg;prev.classList.add('show');}
+  } else {
+    document.getElementById('wm-title').textContent='Add Wallpaper';
+    document.getElementById('wm-edit-id').value='';
+    document.getElementById('wm-name').value='';
+  }
+  showModal('wp-modal');
+}
+
+async function saveWpModal(){
+  const title = document.getElementById('wm-name').value.trim();
+  if(!title){toast('⚠️ Please enter a title');return;}
+
+  const editId=parseInt(document.getElementById('wm-edit-id').value)||null;
+  const cat  =document.getElementById('wm-cat').value;
+  const dev  =document.getElementById('wm-dev').value;
+  const badge=document.getElementById('wm-badge').value;
+  const imgKey= editId ? `wp_${editId}` : `wp_${Date.now()}`;
+
+  if(wpImgPending){
+    await apSaveImage(imgKey, wpImgPending);
+    wpImgPending=null;
+  }
+
+  if(editId){
+    const w=adminWP.find(x=>x.id===editId);
+    if(w){
+      w.title=title; w.category=cat; w.device=dev; w.badge=badge;
+      if(wpImgPending!==null||document.getElementById('wm-prev').src) {
+        w.img=`db:${imgKey}`;
+        w._resolvedImg=document.getElementById('wm-prev').src||w._resolvedImg;
+      }
+    }
+  } else {
+    const newId=Math.max(0,...adminWP.map(x=>x.id))+1;
+    const newW={id:newId,title,category:cat,device:dev,badge,img:`db:${imgKey}`,
+      _resolvedImg:document.getElementById('wm-prev').src||''};
+    adminWP.push(newW);
+  }
+
+  persistWallpapers();
+  closeModal('wp-modal');
+  renderWpGrid(adminWP);
+  loadDashboard();
+  toast(editId?'✅ Wallpaper updated!':'✅ Wallpaper added!');
+}
+
+function deleteWp(id){
+  confirmDialog('Delete Wallpaper','Remove this wallpaper permanently?',()=>{
+    adminWP=adminWP.filter(w=>w.id!==id);
+    apDeleteImage(`wp_${id}`);
+    persistWallpapers();
+    renderWpGrid(adminWP);
+    loadDashboard();
+    toast('🗑️ Wallpaper deleted');
+  });
+}
+
+function persistWallpapers(){
+  const toStore=adminWP.map(w=>{const{_resolvedImg,...rest}=w;return rest;});
+  apSaveSettings('wallpapers',toStore);
+}
+
+// ─── CATEGORIES ──────────────────────────────────────────
+let catImgPending=null;
+
+async function renderCatList(){
+  for(const c of adminCAT){
+    if(!c._resolvedImg){
+      c._resolvedImg=c.img&&c.img.startsWith('db:')
+        ? await apGetImage(c.img.slice(3))||'' : c.img||'';
+    }
+  }
+  const el=document.getElementById('cat-admin-list');
+  el.innerHTML=adminCAT.map(c=>`
+    <div class="cat-row">
+      <img class="cat-thumb" src="${c._resolvedImg||''}" alt="${c.name}"
+        onerror="this.style.background='#1a1a22'">
+      <div class="cat-info">
+        <div class="cat-name">${c.icon} ${c.name}</div>
+        <div class="cat-meta">ID: ${c.id} · ${adminWP.filter(w=>w.category===c.id).length} wallpapers</div>
+      </div>
+      <div class="cat-acts">
+        <button class="btn btn-ghost btn-sm" onclick="openCatModal('${c.id}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCat('${c.id}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function openCatModal(id){
+  catImgPending=null;
+  const prev=document.getElementById('cm-prev');
+  prev.classList.remove('show'); prev.src='';
+
+  if(id){
+    const c=adminCAT.find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('cm-title').textContent='Edit Category';
+    document.getElementById('cm-edit-id').value=id;
+    document.getElementById('cm-name').value=c.name;
+    document.getElementById('cm-icon').value=c.icon;
+    if(c._resolvedImg){prev.src=c._resolvedImg;prev.classList.add('show');}
+  } else {
+    document.getElementById('cm-title').textContent='Add Category';
+    document.getElementById('cm-edit-id').value='';
+    document.getElementById('cm-name').value='';
+    document.getElementById('cm-icon').value='';
+  }
+  showModal('cat-modal');
+}
+
+async function saveCatModal(){
+  const name=document.getElementById('cm-name').value.trim();
+  const icon=document.getElementById('cm-icon').value.trim()||'🖼️';
+  if(!name){toast('⚠️ Please enter a name');return;}
+
+  const editId=document.getElementById('cm-edit-id').value||null;
+  const catId=editId||name.toLowerCase().replace(/\s+/g,'-');
+  const imgKey=`cat_${catId}`;
+
+  if(catImgPending){
+    await apSaveImage(imgKey, catImgPending);
+    catImgPending=null;
+  }
+
+  if(editId){
+    const c=adminCAT.find(x=>x.id===editId);
+    if(c){
+      c.name=name; c.icon=icon;
+      if(document.getElementById('cm-prev').src){
+        c.img=`db:${imgKey}`;
+        c._resolvedImg=document.getElementById('cm-prev').src;
+      }
+    }
+  } else {
+    adminCAT.push({id:catId,name,icon,img:`db:${imgKey}`,_resolvedImg:document.getElementById('cm-prev').src||''});
+  }
+
+  persistCategories();
+  closeModal('cat-modal');
+  renderCatList();
+  toast(editId?'✅ Category updated!':'✅ Category added!');
+}
+
+function deleteCat(id){
+  confirmDialog('Delete Category','Remove this category? Wallpapers won\'t be deleted.',()=>{
+    adminCAT=adminCAT.filter(c=>c.id!==id);
+    apDeleteImage(`cat_${id}`);
+    persistCategories();
+    renderCatList();
+    toast('🗑️ Category deleted');
+  });
+}
+
+function persistCategories(){
+  const toStore=adminCAT.map(c=>{const{_resolvedImg,...rest}=c;return rest;});
+  apSaveSettings('categories',toStore);
+}
+
+// ─── ABOUT ────────────────────────────────────────────────
+function loadAboutTab(){
+  const s=adminCFG;
+  document.getElementById('a-h2').value  =s.aboutH2 ||'Quality over quantity, always.';
+  document.getElementById('a-p1').value  =s.aboutP1 ||'AetherPixels started as a small side project: a place to keep the wallpapers we actually wanted to use.';
+  document.getElementById('a-p2').value  =s.aboutP2 ||'Every wallpaper here is checked for resolution, composition, and color before it\'s added.';
+  document.getElementById('a-stat1').value=s.aboutStat1||'500';
+  document.getElementById('a-stat2').value=s.aboutStat2||'6';
+  document.getElementById('a-stat3').value=s.aboutStat3||'4K';
+}
+
+async function loadAboutPreview(){
+  const url=await apGetImage('about_upload');
+  if(url){const p=document.getElementById('about-img-prev');p.src=url;p.classList.add('show');}
+}
+
+function saveAbout(){
+  adminCFG.aboutH2   =document.getElementById('a-h2').value;
+  adminCFG.aboutP1   =document.getElementById('a-p1').value;
+  adminCFG.aboutP2   =document.getElementById('a-p2').value;
+  adminCFG.aboutStat1=document.getElementById('a-stat1').value;
+  adminCFG.aboutStat2=document.getElementById('a-stat2').value;
+  adminCFG.aboutStat3=document.getElementById('a-stat3').value;
+  apSaveSettings('siteSettings',adminCFG);
+  toast('✅ About page saved!');
+}
+
+// ─── SOCIAL ───────────────────────────────────────────────
+function loadSocialTab(){
+  const s=adminCFG;
+  document.getElementById('s-ig').value   =s.instagram||'https://www.instagram.com/aether_pixels_';
+  document.getElementById('s-tw').value   =s.twitter  ||'https://twitter.com/aetherpixels';
+  document.getElementById('s-pt').value   =s.pinterest||'https://pinterest.com/aetherpixels';
+  document.getElementById('s-gmail').value=s.gmail    ||'aetherpixels1@gmail.com';
+  updateSocialPreviews();
+}
+
+function updateSocialPreviews(){
+  const ig=document.getElementById('s-ig').value;
+  const tw=document.getElementById('s-tw').value;
+  const pt=document.getElementById('s-pt').value;
+  const gm=document.getElementById('s-gmail').value;
+  document.getElementById('prev-ig').href   =ig||'#';
+  document.getElementById('prev-tw').href   =tw||'#';
+  document.getElementById('prev-pt').href   =pt||'#';
+  document.getElementById('prev-gmail').href=gm?'mailto:'+gm:'#';
+}
+
+document.getElementById('s-ig')?.addEventListener('input',updateSocialPreviews);
+document.getElementById('s-tw')?.addEventListener('input',updateSocialPreviews);
+document.getElementById('s-pt')?.addEventListener('input',updateSocialPreviews);
+document.getElementById('s-gmail')?.addEventListener('input',updateSocialPreviews);
+
+function saveSocial(){
+  adminCFG.instagram=document.getElementById('s-ig').value;
+  adminCFG.twitter  =document.getElementById('s-tw').value;
+  adminCFG.pinterest=document.getElementById('s-pt').value;
+  adminCFG.gmail    =document.getElementById('s-gmail').value;
+  apSaveSettings('siteSettings',adminCFG);
+  updateSocialPreviews();
+  toast('✅ Social links saved!');
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────
+function loadSettingsTab(){
+  document.getElementById('cfg-name').value =adminCFG.siteName ||'AETHERPIXELS';
+  document.getElementById('cfg-tag').value  =adminCFG.tagline  ||'Premium Wallpapers for Every Screen';
+  document.getElementById('cfg-copy').value =adminCFG.copyright||'© 2026 AetherPixels. All rights reserved.';
+}
+
+function saveSettings(){
+  adminCFG.siteName  =document.getElementById('cfg-name').value;
+  adminCFG.tagline   =document.getElementById('cfg-tag').value;
+  adminCFG.copyright =document.getElementById('cfg-copy').value;
+  apSaveSettings('siteSettings',adminCFG);
+  toast('✅ Settings saved!');
+}
+
+// ─── RESET ────────────────────────────────────────────────
+function confirmReset(){
+  confirmDialog('Reset Everything?',
+    'All your changes (wallpapers, text, images, links) will be deleted and defaults restored. Cannot be undone.',
+    async ()=>{
+      localStorage.clear();
+      // also clear IndexedDB
+      const db=await apOpenDB().catch(()=>null);
+      if(db){
+        const tx=db.transaction('images','readwrite');
+        tx.objectStore('images').clear();
+      }
+      toast('🔄 Reset complete — reloading...');
+      setTimeout(()=>location.reload(),1200);
+    },
+    'Yes, Reset All'
+  );
+}
+
+// ─── IMAGE UPLOAD HELPERS ─────────────────────────────────
+function handleUpload(input, previewId, dbKey, zoneId){
+  const file=input.files[0];
+  if(!file) return;
+  readFilePreview(file, previewId);
+
+  // store pending blob based on zone/key
+  if(zoneId==='wm-zone')      wpImgPending=file;
+  else if(zoneId==='cm-zone') catImgPending=file;
+  else {
+    // direct save for hero/about
+    apSaveImage(dbKey, file).then(()=>toast('🖼️ Image uploaded!'));
+  }
+}
+
+function readFilePreview(file, previewId){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=document.getElementById(previewId);
+    img.src=e.target.result;
+    img.classList.add('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+// drag and drop
+function onDrag(e,el){e.preventDefault();el.classList.add('drag');}
+function offDrag(e,el){el.classList.remove('drag');}
+function onDrop(e,zoneId,prevId,dbKey){
+  e.preventDefault();
+  const el=document.getElementById(zoneId);
+  el.classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.type.startsWith('image/')) return;
+  const fakeInput={files:[file]};
+  handleUpload(fakeInput,prevId,dbKey,zoneId);
+}
+
+// ─── MODAL HELPERS ────────────────────────────────────────
+function showModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+// ─── CONFIRM DIALOG ───────────────────────────────────────
+let _confirmCb=null;
+function confirmDialog(title,msg,cb,yesLabel='Delete'){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-yes').textContent=yesLabel;
+  document.getElementById('confirm-box').classList.add('show');
+  _confirmCb=cb;
+}
+document.getElementById('confirm-yes').onclick=()=>{
+  if(_confirmCb) _confirmCb();
+  closeConfirm();
+};
+function closeConfirm(){
+  document.getElementById('confirm-box').classList.remove('show');
+  _confirmCb=null;
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window._toastT);
+  window._toastT=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+
+// ─── BOOT ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  if(sessionStorage.getItem('ap_admin')==='1'){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-app').classList.add('visible');
+    initAdminApp();
+  }
+  document.getElementById('pwd-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter') doLogin();
+  });
+});
+</script>
+</body>
+</html>
