@@ -23,47 +23,68 @@ function sbConfigured(){
 }
 
 // ─── FETCH (public pages) ────────────────────────────────────
+// Each fetch is individually try/caught so a network blip or
+// error in ONE of these (wallpapers/categories/settings) never
+// silently takes the others down too — every function always
+// resolves to a safe empty value instead of throwing.
 async function sbFetchWallpapers(){
-  const sb = sbClient();
-  if(!sb) return [];
-  const { data, error } = await sb.from("wallpapers").select("*").order("created_at", { ascending: false });
-  if(error){ console.error("sbFetchWallpapers:", error); return []; }
-  return data.map(w => ({
-    id: w.id,
-    title: w.title,
-    category: w.category,
-    device: w.device,
-    badge: w.badge,
-    img: w.image_url,
-    _resolvedImg: w.thumb_url || w.image_url,
-    _fullImg: w.image_url,
-    width: w.width,
-    height: w.height,
-    views: w.views,
-    downloads: w.downloads
-  }));
+  try{
+    const sb = sbClient();
+    if(!sb) return [];
+    const { data, error } = await sb.from("wallpapers").select("*").order("created_at", { ascending: false });
+    if(error){ console.error("sbFetchWallpapers error:", error.message || error); return []; }
+    if(!data) return [];
+    return data.map(w => ({
+      id: w.id,
+      title: w.title,
+      category: w.category,
+      device: w.device || "Desktop",
+      badge: w.badge || "4K",
+      img: w.image_url,
+      _resolvedImg: w.thumb_url || w.image_url,
+      _fullImg: w.image_url,
+      width: w.width,
+      height: w.height,
+      views: w.views || 0,
+      downloads: w.downloads || 0
+    }));
+  }catch(err){
+    console.error("sbFetchWallpapers threw an exception (likely network/connectivity issue):", err);
+    return [];
+  }
 }
 
 async function sbFetchCategories(){
-  const sb = sbClient();
-  if(!sb) return [];
-  const { data, error } = await sb.from("categories").select("*").order("sort_order", { ascending: true });
-  if(error){ console.error("sbFetchCategories:", error); return []; }
-  return data.map(c => ({
-    id: c.id,
-    name: c.name,
-    icon: c.icon,
-    img: c.image_url,
-    _resolvedImg: c.image_url
-  }));
+  try{
+    const sb = sbClient();
+    if(!sb) return [];
+    const { data, error } = await sb.from("categories").select("*").order("sort_order", { ascending: true });
+    if(error){ console.error("sbFetchCategories error:", error.message || error); return []; }
+    if(!data) return [];
+    return data.map(c => ({
+      id: c.id,
+      name: c.name,
+      icon: c.icon || "🖼️",
+      img: c.image_url,
+      _resolvedImg: c.image_url
+    }));
+  }catch(err){
+    console.error("sbFetchCategories threw an exception (likely network/connectivity issue):", err);
+    return [];
+  }
 }
 
 async function sbFetchSettings(){
-  const sb = sbClient();
-  if(!sb) return {};
-  const { data, error } = await sb.from("site_settings").select("data").eq("id", 1).single();
-  if(error){ console.error("sbFetchSettings:", error); return {}; }
-  return data?.data || {};
+  try{
+    const sb = sbClient();
+    if(!sb) return {};
+    const { data, error } = await sb.from("site_settings").select("data").eq("id", 1).single();
+    if(error){ console.error("sbFetchSettings error:", error.message || error); return {}; }
+    return data?.data || {};
+  }catch(err){
+    console.error("sbFetchSettings threw an exception (likely network/connectivity issue):", err);
+    return {};
+  }
 }
 
 // ─── STORAGE UPLOAD ───────────────────────────────────────────
@@ -203,22 +224,35 @@ async function sbApplyToPage(){
     return;
   }
   try{
-    const [wallpapers, categories, settings] = await Promise.all([
+    // Promise.allSettled (not Promise.all) means even if one of these three
+    // somehow still throws, the other two still resolve normally instead of
+    // all three being wiped out together.
+    const results = await Promise.allSettled([
       sbFetchWallpapers(),
       sbFetchCategories(),
       sbFetchSettings()
     ]);
-    window.WALLPAPERS = wallpapers;
-    window.CATEGORIES = categories;
-    window.AP_SETTINGS = settings;
 
+    const [wpResult, catResult, settingsResult] = results;
+
+    window.WALLPAPERS = wpResult.status === "fulfilled" ? wpResult.value : [];
+    window.CATEGORIES = catResult.status === "fulfilled" ? catResult.value : [];
+    window.AP_SETTINGS = settingsResult.status === "fulfilled" ? settingsResult.value : {};
+
+    if(wpResult.status === "rejected")  console.error("Wallpapers failed to load:", wpResult.reason);
+    if(catResult.status === "rejected") console.error("Categories failed to load:", catResult.reason);
+    if(settingsResult.status === "rejected") console.error("Settings failed to load:", settingsResult.reason);
+
+    console.log(`AetherPixels: loaded ${window.WALLPAPERS.length} wallpaper(s), ${window.CATEGORIES.length} categor(ies) from Supabase.`);
+
+    const settings = window.AP_SETTINGS;
     if(settings.heroImage){
       const heroBg = document.querySelector(".hero-bg");
       if(heroBg) heroBg.style.backgroundImage = `url('${settings.heroImage}')`;
     }
     apApplySettingsToDOMFromSupabase(settings);
   }catch(err){
-    console.error("sbApplyToPage failed:", err);
+    console.error("sbApplyToPage failed unexpectedly:", err);
     window.WALLPAPERS = window.WALLPAPERS || [];
     window.CATEGORIES = window.CATEGORIES || [];
   }

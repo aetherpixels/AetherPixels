@@ -19,6 +19,8 @@ function initNav(){
     document.body.style.overflow = "hidden";
     toggle.innerHTML = "✕";
     toggle.style.fontSize = "18px";
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", "Close menu");
   }
   function closeMenu(){
     links.classList.remove("open");
@@ -27,52 +29,73 @@ function initNav(){
     document.body.style.overflow = "";
     toggle.innerHTML = "☰";
     toggle.style.fontSize = "24px";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open menu");
   }
 
   if(toggle && links){
     toggle.addEventListener("click", () => links.classList.contains("open") ? closeMenu() : openMenu());
     links.querySelectorAll("a").forEach(a => a.addEventListener("click", closeMenu));
     backdrop.addEventListener("click", closeMenu);
+    document.addEventListener("keydown", e => {
+      if(e.key === "Escape" && links.classList.contains("open")) closeMenu();
+    });
   }
 }
 
 // ---------- Search ----------
 function initSearch(){
-  const btn = document.querySelector('.icon-btn[aria-label="Search"]');
+  const btn = document.querySelector('.icon-btn[aria-label="Open search"]') || document.querySelector('.icon-btn[aria-label="Search"]');
   const navInner = document.querySelector(".nav-inner");
   if(!btn || !navInner) return;
 
   const box = document.createElement("div");
   box.className = "search-box";
-  box.innerHTML = `<input type="text" id="global-search" placeholder="Search wallpapers... (press Enter)">`;
+  box.setAttribute("role", "search");
+  box.innerHTML = `
+    <label for="global-search" class="sr-only">Search wallpapers</label>
+    <input type="text" id="global-search" placeholder="Search wallpapers... (press Enter)" autocomplete="off">
+  `;
   navInner.appendChild(box);
   const input = box.querySelector("input");
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     box.classList.toggle("open");
+    btn.setAttribute("aria-expanded", box.classList.contains("open") ? "true" : "false");
     if(box.classList.contains("open")) input.focus();
   });
+  btn.setAttribute("aria-expanded", "false");
 
   input.addEventListener("keydown", (e) => {
     if(e.key === "Enter" && input.value.trim()){
       window.location.href = "category.html?cat=all&q=" + encodeURIComponent(input.value.trim());
+    }
+    if(e.key === "Escape"){
+      box.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.focus();
     }
   });
 
   document.addEventListener("click", (e) => {
     if(!box.contains(e.target) && e.target !== btn){
       box.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
     }
   });
 }
 
 // ---------- Toast ----------
+// Uses an ARIA live region so screen readers announce status messages
+// (e.g. "Downloaded...", "Message sent...") without moving focus.
 function showToast(msg){
   let toast = document.querySelector(".toast");
   if(!toast){
     toast = document.createElement("div");
     toast.className = "toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
     document.body.appendChild(toast);
   }
   toast.textContent = msg;
@@ -204,11 +227,15 @@ function openDownloadModal(id){
 function renderCategoryGrid(targetSelector, categories){
   const el = document.querySelector(targetSelector);
   if(!el) return;
+  if(!categories || categories.length === 0){
+    el.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Categories are loading or none are available yet. If this persists, check the browser console for errors.</p>`;
+    return;
+  }
   el.innerHTML = categories.map(c => `
-    <a class="cat-card" href="category.html?cat=${c.id}">
-      <img src="${c._resolvedImg || c.img}" alt="${c.name} wallpapers" loading="lazy">
+    <a class="cat-card" href="category.html?cat=${c.id}" role="listitem" aria-label="Browse ${c.name} wallpapers">
+      <img src="${c._resolvedImg || c.img}" alt="${c.name} wallpapers preview" loading="lazy" decoding="async" width="400" height="533">
       <div class="cat-info">
-        <div class="cat-name"><span>${c.icon}</span> ${c.name}</div>
+        <div class="cat-name"><span aria-hidden="true">${c.icon}</span> ${c.name}</div>
         <div class="cat-tags">
           <span>📱 Mobile</span>
           <span>🖥️ Desktop</span>
@@ -227,15 +254,15 @@ function renderWallpaperGrid(targetSelector, wallpapers){
     return;
   }
   el.innerHTML = wallpapers.map(w => `
-    <div class="wp-card">
-      <a class="wp-thumb" href="wallpaper.html?id=${w.id}">
-        <span class="wp-badge">${w.badge}</span>
-        <img src="${w._resolvedImg || w.img}" alt="${w.title}" loading="lazy">
+    <div class="wp-card" role="listitem">
+      <a class="wp-thumb" href="wallpaper.html?id=${w.id}" aria-label="View ${w.title} wallpaper details">
+        <span class="wp-badge" aria-hidden="true">${w.badge}</span>
+        <img src="${w._resolvedImg || w.img}" alt="${w.title} — ${capitalize(w.category)} wallpaper" loading="lazy" decoding="async" width="480" height="640">
       </a>
       <div class="wp-body">
         <a class="wp-title" href="wallpaper.html?id=${w.id}">${w.title}</a>
         <div class="wp-meta">${capitalize(w.category)} • ${w.device}</div>
-        <button class="wp-download" onclick="openDownloadModal(${w.id})">⬇ Download</button>
+        <button class="wp-download" onclick="openDownloadModal(${w.id})" aria-label="Download ${w.title}">⬇ Download</button>
       </div>
     </div>
   `).join("");
