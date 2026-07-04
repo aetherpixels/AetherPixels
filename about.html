@@ -183,6 +183,11 @@
     e.target.reset();
     return false;
   }
+
+  // This was missing entirely — without it, the About page never fetched
+  // or applied any saved settings (image, headline, paragraphs, stats),
+  // no matter how many times they were updated in the admin panel.
+  sbApplyToPage().catch(e => console.error(e));
 </script>
 </body>
 </html>
