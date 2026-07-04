@@ -180,7 +180,7 @@
 
     let list = cat === "all" ? wps : wps.filter(w => w.category === cat);
     if(q){
-      list = list.filter(w => w.title.toLowerCase().includes(q) || w.category.toLowerCase().includes(q));
+      list = list.filter(w => (w.title||"").toLowerCase().includes(q) || (w.category||"").toLowerCase().includes(q));
     }
     renderWallpaperGrid("#wp-grid", list);
   }

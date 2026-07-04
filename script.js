@@ -231,44 +231,76 @@ function renderCategoryGrid(targetSelector, categories){
     el.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Categories are loading or none are available yet. If this persists, check the browser console for errors.</p>`;
     return;
   }
-  el.innerHTML = categories.map(c => `
-    <a class="cat-card" href="category.html?cat=${c.id}" role="listitem" aria-label="Browse ${c.name} wallpapers">
-      <img src="${c._resolvedImg || c.img}" alt="${c.name} wallpapers preview" loading="lazy" decoding="async" width="400" height="533">
-      <div class="cat-info">
-        <div class="cat-name"><span aria-hidden="true">${c.icon}</span> ${c.name}</div>
-        <div class="cat-tags">
-          <span>📱 Mobile</span>
-          <span>🖥️ Desktop</span>
-        </div>
-      </div>
-    </a>
-  `).join("");
+  const cards = categories.map(c => {
+    try{
+      const name = c.name || "Category";
+      const icon = c.icon || "🖼️";
+      const img = c._resolvedImg || c.img || "";
+      if(!img) return "";
+      return `
+        <a class="cat-card" href="category.html?cat=${c.id}" role="listitem" aria-label="Browse ${name} wallpapers">
+          <img src="${img}" alt="${name} wallpapers preview" loading="lazy" decoding="async" width="400" height="533">
+          <div class="cat-info">
+            <div class="cat-name"><span aria-hidden="true">${icon}</span> ${name}</div>
+            <div class="cat-tags">
+              <span>📱 Mobile</span>
+              <span>🖥️ Desktop</span>
+            </div>
+          </div>
+        </a>
+      `;
+    }catch(err){
+      console.error("Skipped a malformed category record:", c, err);
+      return "";
+    }
+  });
+  el.innerHTML = cards.join("") || `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Categories are loading or none are available yet.</p>`;
 }
 
 // ---------- Render wallpaper grid ----------
 function renderWallpaperGrid(targetSelector, wallpapers){
   const el = document.querySelector(targetSelector);
   if(!el) return;
-  if(wallpapers.length === 0){
+  if(!wallpapers || wallpapers.length === 0){
     el.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">No wallpapers found.</p>`;
     return;
   }
-  el.innerHTML = wallpapers.map(w => `
-    <div class="wp-card" role="listitem">
-      <a class="wp-thumb" href="wallpaper.html?id=${w.id}" aria-label="View ${w.title} wallpaper details">
-        <span class="wp-badge" aria-hidden="true">${w.badge}</span>
-        <img src="${w._resolvedImg || w.img}" alt="${w.title} — ${capitalize(w.category)} wallpaper" loading="lazy" decoding="async" width="480" height="640">
-      </a>
-      <div class="wp-body">
-        <a class="wp-title" href="wallpaper.html?id=${w.id}">${w.title}</a>
-        <div class="wp-meta">${capitalize(w.category)} • ${w.device}</div>
-        <button class="wp-download" onclick="openDownloadModal(${w.id})" aria-label="Download ${w.title}">⬇ Download</button>
-      </div>
-    </div>
-  `).join("");
+  // Build each card independently — if one record is malformed (missing
+  // fields, bad category, etc.) it's skipped instead of crashing the
+  // entire grid and taking every other wallpaper down with it.
+  const cards = wallpapers.map(w => {
+    try{
+      const title = w.title || "Untitled Wallpaper";
+      const category = w.category || "uncategorized";
+      const device = w.device || "Desktop";
+      const badge = w.badge || "4K";
+      const img = w._resolvedImg || w.img || "";
+      if(!img) return "";
+      return `
+        <div class="wp-card" role="listitem">
+          <a class="wp-thumb" href="wallpaper.html?id=${w.id}" aria-label="View ${title} wallpaper details">
+            <span class="wp-badge" aria-hidden="true">${badge}</span>
+            <img src="${img}" alt="${title} — ${capitalize(category)} wallpaper" loading="lazy" decoding="async" width="480" height="640">
+          </a>
+          <div class="wp-body">
+            <a class="wp-title" href="wallpaper.html?id=${w.id}">${title}</a>
+            <div class="wp-meta">${capitalize(category)} • ${device}</div>
+            <button class="wp-download" onclick="openDownloadModal(${w.id})" aria-label="Download ${title}">⬇ Download</button>
+          </div>
+        </div>
+      `;
+    }catch(err){
+      console.error("Skipped a malformed wallpaper record:", w, err);
+      return "";
+    }
+  });
+  el.innerHTML = cards.join("") || `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">No wallpapers found.</p>`;
 }
 
-function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function capitalize(s){
+  if(!s || typeof s !== "string") return "Uncategorized";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   initNav();

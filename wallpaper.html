@@ -152,7 +152,7 @@
     const pageUrl = `https://aetherpixels.github.io/AetherPixels/wallpaper.html?id=${w.id}`;
     const imgUrl  = w._resolvedImg || w.img || "";
     const seoTitle = `${w.title} — Free 4K Wallpaper — AetherPixels`;
-    const seoDesc  = `Download "${w.title}", a free ${capitalize(w.category)} wallpaper in 4K, optimized for ${w.device.toLowerCase()}.`;
+    const seoDesc  = `Download "${w.title}", a free ${capitalize(w.category)} wallpaper in 4K, optimized for ${(w.device||"any device").toLowerCase()}.`;
 
     document.title = seoTitle;
     document.getElementById("page-title-tag").textContent = seoTitle;
