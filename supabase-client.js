@@ -155,11 +155,15 @@ async function sbDeleteWallpaper(id){
 }
 
 // ─── CATEGORIES: WRITE ─────────────────────────────────────────
+// NOTE: each upload uses a unique timestamped filename (not a fixed
+// path like categories/cars.webp). Re-using the same path would let
+// browsers/CDNs keep serving the OLD cached image forever, since the
+// public URL never changes even after the file is overwritten.
 async function sbAddCategory({ id, name, icon, file }){
   const sb = sbClient();
   let imageUrl = null;
   if(file){
-    imageUrl = await sbUploadFile("site-assets", `categories/${id}.webp`, file);
+    imageUrl = await sbUploadFile("site-assets", `categories/${id}-${Date.now()}.webp`, file);
   }
   const { error } = await sb.from("categories").insert({ id, name, icon, image_url: imageUrl });
   if(error){ console.error("sbAddCategory:", error); throw error; }
@@ -169,7 +173,7 @@ async function sbUpdateCategory(id, patch, file){
   const sb = sbClient();
   const updates = { ...patch };
   if(file){
-    updates.image_url = await sbUploadFile("site-assets", `categories/${id}.webp`, file);
+    updates.image_url = await sbUploadFile("site-assets", `categories/${id}-${Date.now()}.webp`, file);
   }
   const { error } = await sb.from("categories").update(updates).eq("id", id);
   if(error){ console.error("sbUpdateCategory:", error); throw error; }
