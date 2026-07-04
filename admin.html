@@ -668,7 +668,7 @@ function loadDashboard(){
   const recent = document.getElementById('dash-recent');
   recent.innerHTML = [...adminWP].slice(-4).reverse().map(w=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <img src="${w._resolvedImg||w.img||''}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+      <img src="${w._resolvedImg||w.img||''}" alt="${w.title}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
       <div style="flex:1;overflow:hidden;">
         <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.title}</div>
         <div style="font-size:11px;color:var(--muted);">${w.category} · 👁 ${w.views||0} · ⬇ ${w.downloads||0}</div>
@@ -876,7 +876,7 @@ function renderBulkQueue(){
   const el = document.getElementById('bulk-queue');
   el.innerHTML = bulkQueue.map((item,i)=>`
     <div class="bulk-item" id="bulk-item-${i}">
-      <img src="" data-idx="${i}">
+      <img src="" data-idx="${i}" alt="${item.name} preview">
       <div class="name">${item.name}</div>
       <div class="status ${item.status}">${statusLabel(item.status)}</div>
       <button class="rm" onclick="removeBulkItem(${i})" title="Remove">✕</button>

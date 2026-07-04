@@ -3,27 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About — AetherPixels</title>
+<title>About Us & Contact — AetherPixels</title>
+<meta name="description" content="Learn about AetherPixels, a curated 4K wallpaper library, and get in touch for questions, requests, or DMCA concerns.">
+<link rel="canonical" href="https://aetherpixels.github.io/AetherPixels/about.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AetherPixels">
+<meta property="og:title" content="About Us & Contact — AetherPixels">
+<meta property="og:description" content="Learn about AetherPixels, a curated 4K wallpaper library, and get in touch.">
+<meta property="og:url" content="https://aetherpixels.github.io/AetherPixels/about.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="About Us & Contact — AetherPixels">
+<meta name="twitter:description" content="Learn about AetherPixels, a curated 4K wallpaper library, and get in touch.">
+<meta name="twitter:image" content="https://aetherpixels.github.io/AetherPixels/logo.png">
+<link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
+<link rel="icon" href="logo.png" type="image/png">
 <link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "AetherPixels",
+  "url": "https://aetherpixels.github.io/AetherPixels/index.html",
+  "logo": "https://aetherpixels.github.io/AetherPixels/logo.png",
+  "description": "AetherPixels is a curated library of premium, AI-crafted 4K wallpapers for mobile and desktop.",
+  "sameAs": [
+    "https://www.instagram.com/aether_pixels_"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "AetherPixels",
+  "url": "https://aetherpixels.github.io/AetherPixels/about.html",
+  "description": "Learn about AetherPixels and get in touch."
+}
+</script>
 </head>
 <body>
 
-<nav class="nav">
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<nav class="nav" aria-label="Main navigation">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels logo">
       <span class="brand-name">AETHERPIXELS</span>
     </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="category.html">Categories</a></li>
       <li><a href="latest.html">Latest</a></li>
-      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="about.html" class="active" aria-current="page">About</a></li>
     </ul>
     <div class="nav-right">
-      <button class="icon-btn" aria-label="Search">🔍</button>
+      <button class="icon-btn" aria-label="Open search">🔍</button>
       <a href="#" class="btn-signin">Sign In</a>
-      <button class="nav-toggle" aria-label="Menu">☰</button>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
     </div>
   </div>
 </nav>
@@ -31,19 +68,20 @@
 
 <header class="page-header">
   <div class="wrap">
-    <div class="breadcrumb"><a href="index.html">Home</a> / About</div>
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a> / About</nav>
     <h1>About AetherPixels</h1>
     <p>Why we built a wallpaper library worth bookmarking.</p>
   </div>
 </header>
 
+<main id="main-content">
 <section class="section">
   <div class="wrap about-grid">
-    <img src="https://images.unsplash.com/photo-1419833479618-c595710e4f0e?w=900&q=80&auto=format&fit=crop" alt="Neon city street at night">
+    <img src="https://images.unsplash.com/photo-1419833479618-c595710e4f0e?w=900&q=80&auto=format&fit=crop" alt="Neon-lit city street at night, representing the AetherPixels aesthetic" loading="lazy" decoding="async" width="900" height="600">
     <div class="about-text">
-      <h2>Quality over quantity, always.</h2>
-      <p>AetherPixels started as a small side project: a place to keep the wallpapers we actually wanted to use, instead of digging through ad-stuffed sites for one decent image.</p>
-      <p>Every wallpaper here is checked for resolution, composition, and color before it's added. No watermarks, no upscaled junk, no clutter — just clean, high quality backgrounds for your phone and desktop.</p>
+      <h2 class="about-h2">Quality over quantity, always.</h2>
+      <p class="about-p1">AetherPixels started as a small side project: a place to keep the wallpapers we actually wanted to use, instead of digging through ad-stuffed sites for one decent image.</p>
+      <p class="about-p2">Every wallpaper here is checked for resolution, composition, and color before it's added. No watermarks, no upscaled junk, no clutter — just clean, high quality backgrounds for your phone and desktop. Browse our <a href="category.html?cat=all" style="color:var(--gold);text-decoration:underline;">full wallpaper collection</a> or check out the <a href="latest.html" style="color:var(--gold);text-decoration:underline;">latest additions</a>.</p>
       <div class="stat-row">
         <div><b>500+</b><span>Wallpapers</span></div>
         <div><b>6</b><span>Categories</span></div>
@@ -53,35 +91,39 @@
   </div>
 </section>
 
-<section class="section section-tight" id="contact" style="border-top:1px solid rgba(255,255,255,.06)">
+<section class="section section-tight" id="contact" style="border-top:1px solid rgba(255,255,255,.06)" aria-labelledby="contact-heading">
   <div class="wrap">
     <div class="section-head">
       <div class="section-tag">✉️ GET IN TOUCH</div>
-      <h2>Questions, requests, or DMCA?</h2>
+      <h2 id="contact-heading">Questions, requests, or DMCA?</h2>
       <p>Drop a message and we'll get back to you within a couple of days.</p>
     </div>
-    <form class="contact-form" id="contact-form" onsubmit="return handleContact(event)" style="margin:0 auto;">
+    <form class="contact-form" id="contact-form" onsubmit="return handleContact(event)" style="margin:0 auto;" aria-label="Contact form">
+      <label for="cf-name" class="sr-only">Your name</label>
       <input type="text" id="cf-name" placeholder="Your name" required>
+      <label for="cf-email" class="sr-only">Your email</label>
       <input type="email" id="cf-email" placeholder="Your email" required>
+      <label for="cf-msg" class="sr-only">Your message</label>
       <textarea id="cf-msg" placeholder="What's on your mind?" required></textarea>
       <button type="submit" class="btn btn-gold" style="justify-self:start;">Send Message ✉️</button>
     </form>
   </div>
 </section>
+</main>
 
-<footer class="footer">
+<footer class="footer" role="contentinfo">
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="index.html" class="brand">
-      <img src="logo.png" class="brand-logo" alt="AetherPixels">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels logo">
       <span class="brand-name">AETHERPIXELS</span>
     </a>
         <p>Handpicked high quality wallpapers for your mobile and desktop. Pure quality. Pure aesthetic.</p>
         <div class="footer-social">
-          <a class="icon-btn" href="https://www.instagram.com/aether_pixels_" class="social-insta" target="_blank" rel="noopener" aria-label="Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
-          <a class="icon-btn" href="#" aria-label="Twitter">🐦</a>
-          <a class="icon-btn" href="#" aria-label="Pinterest">📌</a>
+          <a class="icon-btn social-insta" href="https://www.instagram.com/aether_pixels_" target="_blank" rel="noopener" aria-label="Follow AetherPixels on Instagram" title="@aether_pixels_"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="icon-btn social-twitter" href="#" aria-label="Follow AetherPixels on Twitter">🐦</a>
+          <a class="icon-btn social-pinterest" href="#" aria-label="Follow AetherPixels on Pinterest">📌</a>
         </div>
       </div>
       <div>
