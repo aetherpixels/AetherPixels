@@ -3,35 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title-tag">Free 4K Wallpaper Download — AetherPixels</title>
-<meta id="meta-description" name="description" content="Download this free, high quality 4K wallpaper for mobile and desktop from AetherPixels' curated collection.">
+<title id="page-title-tag">Wallpaper Preview — AetherPixels</title>
+<meta id="meta-description" name="description" content="Download this free 4K wallpaper for mobile and desktop from AetherPixels.">
 <link id="canonical-link" rel="canonical" href="https://aetherpixels.github.io/AetherPixels/wallpaper.html">
-<meta property="og:type" content="website">
+<meta id="og-title" property="og:type" content="website">
 <meta property="og:site_name" content="AetherPixels">
-<meta id="og-title-tag" property="og:title" content="Free 4K Wallpaper Download — AetherPixels">
-<meta id="og-desc-tag" property="og:description" content="Download this free, high quality 4K wallpaper for mobile and desktop.">
-<meta id="og-image-tag" property="og:image" content="https://aetherpixels.github.io/AetherPixels/logo.png">
+<meta id="og-title-tag" property="og:title" content="Wallpaper Preview — AetherPixels">
+<meta id="og-desc-tag" property="og:description" content="Download this free 4K wallpaper for mobile and desktop.">
+<meta id="og-image-tag" property="og:image" content="">
 <meta id="og-url-tag" property="og:url" content="https://aetherpixels.github.io/AetherPixels/wallpaper.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta id="twitter-title-tag" name="twitter:title" content="Free 4K Wallpaper Download — AetherPixels">
-<meta id="twitter-desc-tag" name="twitter:description" content="Download this free, high quality 4K wallpaper for mobile and desktop.">
-<meta id="twitter-image-tag" name="twitter:image" content="https://aetherpixels.github.io/AetherPixels/logo.png">
 <link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="stylesheet" href="style.css">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "AetherPixels",
-  "url": "https://aetherpixels.github.io/AetherPixels/index.html",
-  "logo": "https://aetherpixels.github.io/AetherPixels/logo.png",
-  "description": "AetherPixels is a curated library of premium, AI-crafted 4K wallpapers for mobile and desktop.",
-  "sameAs": [
-    "https://www.instagram.com/aether_pixels_"
-  ]
-}
-</script>
 </head>
 <body>
 
@@ -67,15 +51,7 @@
 <main id="main-content">
 <section class="section">
   <div class="wrap detail-grid" id="detail-root">
-    <div class="detail-preview" id="detail-preview">
-      <!-- filled by JS -->
-    </div>
-    <div class="detail-info">
-      <h1 id="wp-h1">Wallpaper Preview</h1>
-      <div id="detail-info-rest">
-        <!-- filled by JS -->
-      </div>
-    </div>
+    <!-- filled by JS -->
   </div>
 </section>
 
@@ -160,20 +136,13 @@
     document.getElementById("canonical-link").setAttribute("href", pageUrl);
     document.getElementById("og-title-tag").setAttribute("content", seoTitle);
     document.getElementById("og-desc-tag").setAttribute("content", seoDesc);
-    document.getElementById("og-image-tag").setAttribute("content", imgUrl || "https://aetherpixels.github.io/AetherPixels/logo.png");
+    document.getElementById("og-image-tag").setAttribute("content", imgUrl);
     document.getElementById("og-url-tag").setAttribute("content", pageUrl);
-    document.getElementById("twitter-title-tag").setAttribute("content", seoTitle);
-    document.getElementById("twitter-desc-tag").setAttribute("content", seoDesc);
-    document.getElementById("twitter-image-tag").setAttribute("content", imgUrl || "https://aetherpixels.github.io/AetherPixels/logo.png");
 
-    // Remove any previously injected dynamic structured data before adding new
-    // (prevents duplicate JSON-LD blocks if loadDetail() ever runs more than once)
-    document.querySelectorAll('script[data-dynamic-ld]').forEach(el => el.remove());
-
-    const imageLd = document.createElement("script");
-    imageLd.type = "application/ld+json";
-    imageLd.setAttribute("data-dynamic-ld", "image");
-    imageLd.textContent = JSON.stringify({
+    // Structured data for this specific wallpaper (helps image search + rich results)
+    const ld = document.createElement("script");
+    ld.type = "application/ld+json";
+    ld.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "ImageObject",
       "name": w.title,
@@ -183,43 +152,26 @@
       "width": w.width || undefined,
       "height": w.height || undefined
     });
-    document.head.appendChild(imageLd);
-
-    // Breadcrumb structured data (Home > Category > Wallpaper title)
-    const breadcrumbLd = document.createElement("script");
-    breadcrumbLd.type = "application/ld+json";
-    breadcrumbLd.setAttribute("data-dynamic-ld", "breadcrumb");
-    breadcrumbLd.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://aetherpixels.github.io/AetherPixels/index.html" },
-        { "@type": "ListItem", "position": 2, "name": capitalize(w.category), "item": `https://aetherpixels.github.io/AetherPixels/category.html?cat=${w.category}` },
-        { "@type": "ListItem", "position": 3, "name": w.title, "item": pageUrl }
-      ]
-    });
-    document.head.appendChild(breadcrumbLd);
+    document.head.appendChild(ld);
 
     document.querySelector("#breadcrumb").innerHTML =
       `<a href="index.html">Home</a> / <a href="category.html?cat=${w.category}">${capitalize(w.category)}</a> / ${w.title}`;
 
-    // Update the single static H1 by text only — never replaced/duplicated via innerHTML
-    document.getElementById("wp-h1").textContent = w.title;
-
-    document.querySelector("#detail-preview").innerHTML = `
-      <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${w.badge}</span>
-      <img src="${imgUrl}" alt="${w.title} — ${capitalize(w.category)} wallpaper" loading="eager" decoding="async">
-    `;
-
-    document.querySelector("#detail-info-rest").innerHTML = `
-      <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}${w.views ? ' • 👁 ' + w.views + ' views' : ''}</div>
-      <div class="detail-tags">
-        <span>📷 High Resolution</span>
-        <span>🆓 Free to Use</span>
-        <span>🤖 AI Crafted</span>
+    document.querySelector("#detail-root").innerHTML = `
+      <div class="detail-preview">
+        <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${w.badge}</span>
+        <img src="${imgUrl}" alt="${w.title} — ${capitalize(w.category)} wallpaper" loading="eager">
       </div>
-      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${w.title}">⬇ Download Wallpaper</button>
-      <a href="category.html?cat=${w.category}" class="view-all" style="margin-top:16px;display:inline-flex;">Browse more ${capitalize(w.category)} wallpapers →</a>
+      <div class="detail-info">
+        <h1>${w.title}</h1>
+        <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}${w.views ? ' • 👁 ' + w.views + ' views' : ''}</div>
+        <div class="detail-tags">
+          <span>📷 High Resolution</span>
+          <span>🆓 Free to Use</span>
+          <span>🤖 AI Crafted</span>
+        </div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${w.title}">⬇ Download Wallpaper</button>
+      </div>
     `;
 
     // Track this page view (Supabase, silently no-ops if not configured)
