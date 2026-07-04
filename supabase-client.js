@@ -196,24 +196,26 @@ async function sbSaveSettings(patch){
 }
 
 // ─── ANALYTICS ────────────────────────────────────────────────
+// Visitors (anon key) have NO direct write access to analytics_events
+// or wallpapers anymore (see sql/security_hardening.sql) — that's
+// intentional, since open write access there was a real vulnerability.
+// Instead, both counters go through one narrow RPC function that only
+// ever increments exactly one counter by exactly 1 and logs the event
+// safely server-side. Never call sb.from("wallpapers").update(...) or
+// sb.from("analytics_events").insert(...) directly from client code.
 async function sbTrackView(wallpaperId){
   const sb = sbClient();
   if(!sb) return;
-  await sb.from("analytics_events").insert({ wallpaper_id: wallpaperId, event_type: "view" });
-  await sb.rpc("increment_views", { wp_id: wallpaperId }).catch(() => {
-    // fallback if RPC function doesn't exist: manual increment
-    sb.from("wallpapers").select("views").eq("id", wallpaperId).single().then(({data}) => {
-      if(data) sb.from("wallpapers").update({ views: (data.views||0)+1 }).eq("id", wallpaperId).then(()=>{});
-    });
-  });
+  const { error } = await sb.rpc("increment_wallpaper_stat", { wp_id: wallpaperId, stat_type: "view" });
+  if(error) console.error("sbTrackView failed:", error.message || error);
 }
 
 async function sbTrackDownload(wallpaperId, mode){
   const sb = sbClient();
   if(!sb) return;
-  await sb.from("analytics_events").insert({ wallpaper_id: wallpaperId, event_type: mode==="mobile" ? "download_mobile" : "download_desktop" });
-  const { data } = await sb.from("wallpapers").select("downloads").eq("id", wallpaperId).single();
-  if(data) await sb.from("wallpapers").update({ downloads: (data.downloads||0)+1 }).eq("id", wallpaperId);
+  const statType = mode === "mobile" ? "download_mobile" : "download_desktop";
+  const { error } = await sb.rpc("increment_wallpaper_stat", { wp_id: wallpaperId, stat_type: statType });
+  if(error) console.error("sbTrackDownload failed:", error.message || error);
 }
 
 // ─── APPLY TO PAGE ──────────────────────────────────────────

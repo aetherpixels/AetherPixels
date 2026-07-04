@@ -222,14 +222,18 @@ img{display:block;max-width:100%;}
   <div class="lcard">
     <div class="llogo"><img src="logo.png" alt="AetherPixels"></div>
     <h1>Admin Panel</h1>
-    <p class="sub">Enter your password to manage AetherPixels</p>
+    <p class="sub">Sign in to manage AetherPixels</p>
+    <div class="field">
+      <label>EMAIL</label>
+      <input type="email" id="email-input" placeholder="you@example.com" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
     <div class="field">
       <label>PASSWORD</label>
-      <input type="password" id="pwd-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="pwd-input" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       <button class="eye" onclick="togglePwd()" id="eye-btn">👁</button>
     </div>
-    <button class="lbtn" onclick="doLogin()">🔓 Login to Admin</button>
-    <div class="lerr" id="lerr">Incorrect password. Try again.</div>
+    <button class="lbtn" id="login-btn" onclick="doLogin()">🔓 Login to Admin</button>
+    <div class="lerr" id="lerr">Incorrect email or password.</div>
   </div>
 </div>
 
@@ -566,30 +570,106 @@ img{display:block;max-width:100%;}
 <script src="supabase-client.js"></script>
 <script src="image-utils.js"></script>
 <script>
-// ─── AUTH ───────────────────────────────────────────────
-const PW = "om_sankesara652008";
+// ─── AUTH (Supabase Auth — real session-based authentication) ──
+// The admin password used to be a plaintext string sitting in this
+// file, readable by anyone who opened dev tools or viewed the page
+// source on GitHub. That is now replaced with real email/password
+// authentication via Supabase Auth: credentials are verified
+// server-side, and every write request automatically carries a
+// signed session token that Postgres RLS policies check against
+// (see sql/security_hardening.sql — is_admin() checks this).
 
-function doLogin(){
-  const v = document.getElementById('pwd-input').value;
-  if(v === PW){
-    sessionStorage.setItem('ap_admin','1');
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('admin-app').classList.add('visible');
-    initAdminApp();
-  } else {
-    const e = document.getElementById('lerr');
-    e.style.display='block';
-    document.getElementById('pwd-input').value='';
-    setTimeout(()=>e.style.display='none',3000);
+let currentSession = null;
+
+async function doLogin(){
+  const email = document.getElementById('email-input').value.trim();
+  const password = document.getElementById('pwd-input').value;
+  const btn = document.getElementById('login-btn');
+  const errBox = document.getElementById('lerr');
+
+  if(!email || !password){
+    errBox.textContent = 'Please enter both email and password.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Signing in...';
+  errBox.style.display = 'none';
+
+  try{
+    const sb = sbClient();
+    if(!sb) throw new Error('Supabase client not available');
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+
+    currentSession = data.session;
+    await enterAdminApp();
+  }catch(err){
+    console.error('Login failed:', err);
+    errBox.textContent = 'Incorrect email or password.';
+    errBox.style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '🔓 Login to Admin';
   }
 }
+
 function togglePwd(){
   const i = document.getElementById('pwd-input');
   i.type = i.type==='password' ? 'text' : 'password';
 }
-function doLogout(){
-  sessionStorage.removeItem('ap_admin');
+
+async function doLogout(){
+  try{
+    const sb = sbClient();
+    if(sb) await sb.auth.signOut();
+  }catch(err){
+    console.error('Logout error (proceeding anyway):', err);
+  }
+  currentSession = null;
   location.reload();
+}
+
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-app').classList.remove('visible');
+}
+
+async function enterAdminApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-app').classList.add('visible');
+  await initAdminApp();
+}
+
+// ─── SESSION RESTORE + ROUTE PROTECTION ──────────────────────
+// Runs on every page load: if Supabase already has a valid session
+// (e.g. the browser was left logged in), skip straight to the admin
+// app. Otherwise show the login screen. Also listens for the session
+// expiring/being revoked mid-use and kicks back to login automatically.
+async function bootstrapAuth(){
+  const sb = sbClient();
+  if(!sb){
+    showLoginScreen();
+    return;
+  }
+
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    currentSession = data.session;
+    await enterAdminApp();
+  }else{
+    showLoginScreen();
+  }
+
+  sb.auth.onAuthStateChange((event, session) => {
+    currentSession = session;
+    if(event === 'SIGNED_OUT' || !session){
+      showLoginScreen();
+    }
+  });
 }
 
 // ─── BACKEND STATUS BANNER ───────────────────────────────
@@ -1210,17 +1290,9 @@ function toast(msg){
 function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
 // ─── BOOT ─────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded',()=>{
-  if(sessionStorage.getItem('ap_admin')==='1'){
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('admin-app').classList.add('visible');
-    initAdminApp();
-  }
-  document.getElementById('pwd-input').addEventListener('keydown',e=>{
-    if(e.key==='Enter') doLogin();
-  });
+window.addEventListener('DOMContentLoaded', () => {
+  bootstrapAuth();
 });
-</script>
 </script>
 </body>
 </html>
