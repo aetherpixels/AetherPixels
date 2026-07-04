@@ -148,7 +148,8 @@ function slugify(s){
 
 // ---------- Download picker modal (Mobile / Desktop) ----------
 function openDownloadModal(id){
-  const w = WALLPAPERS.find(x => x.id === id);
+  const list = window.WALLPAPERS || [];
+  const w = list.find(x => x.id === id);
   if(!w) return;
 
   let modal = document.querySelector(".dl-modal");
@@ -156,20 +157,23 @@ function openDownloadModal(id){
 
   modal = document.createElement("div");
   modal.className = "dl-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", `Download options for ${w.title}`);
   modal.innerHTML = `
     <div class="dl-modal-card">
-      <button class="dl-close" aria-label="Close">✕</button>
-      <img class="dl-modal-thumb" src="${w.img}" alt="${w.title}">
+      <button class="dl-close" aria-label="Close dialog">✕</button>
+      <img class="dl-modal-thumb" src="${w._resolvedImg || w.img}" alt="${w.title}">
       <h3>Download "${w.title}"</h3>
       <p>Choose a size to download the right fit.</p>
       <div class="dl-options">
-        <button class="dl-option" data-mode="mobile">
-          <span class="dl-option-icon">📱</span>
+        <button class="dl-option" data-mode="mobile" aria-label="Download for mobile, 1080 by 1920">
+          <span class="dl-option-icon" aria-hidden="true">📱</span>
           <span>Mobile</span>
           <span class="dl-option-dim">1080 × 1920</span>
         </button>
-        <button class="dl-option" data-mode="desktop">
-          <span class="dl-option-icon">🖥️</span>
+        <button class="dl-option" data-mode="desktop" aria-label="Download for desktop, 1920 by 1080">
+          <span class="dl-option-icon" aria-hidden="true">🖥️</span>
           <span>Desktop</span>
           <span class="dl-option-dim">1920 × 1080</span>
         </button>
@@ -181,12 +185,19 @@ function openDownloadModal(id){
   const close = () => { modal.classList.remove("show"); setTimeout(() => modal.remove(), 250); };
   modal.querySelector(".dl-close").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if(e.target === modal) close(); });
+  modal.addEventListener("keydown", (e) => { if(e.key === "Escape") close(); });
   modal.querySelectorAll(".dl-option").forEach(btn => {
     btn.addEventListener("click", () => {
-      downloadAs(w.img, w.title, btn.dataset.mode);
+      downloadAs(w._resolvedImg || w.img, w.title, btn.dataset.mode);
+      if(typeof sbConfigured === "function" && sbConfigured()){
+        sbTrackDownload(w.id, btn.dataset.mode).catch(()=>{});
+      }
       close();
     });
   });
+
+  // basic focus trap: focus first option
+  modal.querySelector(".dl-option")?.focus();
 }
 
 // ---------- Render category cards ----------

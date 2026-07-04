@@ -98,15 +98,17 @@
   </div>
 </footer>
 
-<script src="db.js"></script>
-<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
 <script src="script.js"></script>
 <script>
   function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
 
   function loadDetail(){
+    const wps = window.WALLPAPERS || [];
     const id = parseInt(getParam("id"), 10);
-    const w = WALLPAPERS.find(x => x.id === id) || WALLPAPERS[0];
+    const w = wps.find(x => x.id === id) || wps[0];
+    if(!w) return;
 
     document.title = `${w.title} — AetherPixels`;
     document.querySelector("#breadcrumb").innerHTML =
@@ -115,11 +117,11 @@
     document.querySelector("#detail-root").innerHTML = `
       <div class="detail-preview">
         <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${w.badge}</span>
-        <img src="${w.img}" alt="${w.title}">
+        <img src="${w._resolvedImg || w.img}" alt="${w.title}" loading="eager">
       </div>
       <div class="detail-info">
         <h1>${w.title}</h1>
-        <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}</div>
+        <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}${w.views ? ' • 👁 ' + w.views + ' views' : ''}</div>
         <div class="detail-tags">
           <span>📷 High Resolution</span>
           <span>🆓 Free to Use</span>
@@ -129,11 +131,19 @@
       </div>
     `;
 
-    const related = WALLPAPERS.filter(x => x.category === w.category && x.id !== w.id).slice(0,4);
-    renderWallpaperGrid("#related-grid", related.length ? related : WALLPAPERS.filter(x=>x.id!==w.id).slice(0,4));
+    // Track this page view (Supabase, silently no-ops if not configured)
+    if(typeof sbConfigured === "function" && sbConfigured()){
+      sbTrackView(w.id).catch(()=>{});
+    }
+
+
+    const related = wps.filter(x => x.category === w.category && x.id !== w.id).slice(0,4);
+    renderWallpaperGrid("#related-grid", related.length ? related : wps.filter(x=>x.id!==w.id).slice(0,4));
   }
 
-  loadDetail();
+  sbApplyToPage()
+    .catch(e=>console.error(e))
+    .finally(loadDetail);
 </script>
 </body>
 </html>

@@ -91,13 +91,15 @@
   </div>
 </footer>
 
-<script src="db.js"></script>
-<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
 <script src="script.js"></script>
 <script>
-  apApplyOverrides().catch(e=>console.error(e)).finally(()=>{
-    renderWallpaperGrid("#wp-grid", [...(window.WALLPAPERS || WALLPAPERS)].reverse());
-  });
+  sbApplyToPage()
+    .catch(e=>console.error(e))
+    .finally(()=>{
+      renderWallpaperGrid("#wp-grid", [...(window.WALLPAPERS || [])].reverse());
+    });
 </script>
 </body>
 </html>

@@ -190,6 +190,19 @@ img{display:block;max-width:100%;}
   border:1px solid var(--border);border-radius:9px;color:#fff;font-size:13.5px;}
 .search-bar input:focus{outline:none;border-color:var(--gold);}
 
+/* Bulk upload queue */
+.bulk-item{display:flex;align-items:center;gap:10px;background:var(--bg);
+  border:1px solid var(--border);border-radius:9px;padding:8px 10px;}
+.bulk-item img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;}
+.bulk-item .name{flex:1;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bulk-item .status{font-size:11px;font-weight:700;flex-shrink:0;}
+.bulk-item .status.pending{color:var(--muted);}
+.bulk-item .status.working{color:var(--gold);}
+.bulk-item .status.done{color:var(--green);}
+.bulk-item .status.error{color:var(--red);}
+.bulk-item .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;}
+.bulk-item .rm:hover{color:var(--red);}
+
 @media(max-width:768px){
   .sb{transform:translateX(-100%);}
   .sb.open{transform:translateX(0);}
@@ -315,7 +328,10 @@ img{display:block;max-width:100%;}
     <div class="tab" id="tab-wallpapers">
       <div class="sec-hdr">
         <div><h2>🎨 Wallpapers</h2><p>Add, edit or remove wallpapers from your collection.</p></div>
-        <button class="btn btn-gold" onclick="openWpModal()">+ Add Wallpaper</button>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="openBulkModal()">📦 Bulk Upload</button>
+          <button class="btn btn-gold" onclick="openWpModal()">+ Add Wallpaper</button>
+        </div>
       </div>
       <div class="search-bar">
         <input type="text" id="wp-search" placeholder="Search wallpapers..." oninput="filterWallpapers()">
@@ -488,6 +504,49 @@ img{display:block;max-width:100%;}
   </div>
 </div>
 
+<!-- ─── Bulk Upload Modal ─── -->
+<div class="moverlay" id="bulk-modal">
+  <div class="mbox" style="max-width:600px;">
+    <div class="mhdr">
+      <h3>📦 Bulk Upload Wallpapers</h3>
+      <button class="mcls" onclick="closeModal('bulk-modal')">✕</button>
+    </div>
+    <div class="upzone" id="bulk-zone" ondragover="onDrag(event,this)" ondragleave="offDrag(event,this)" ondrop="onBulkDrop(event)">
+      <div class="ico">📦</div>
+      <div class="hint"><b>Click or drag multiple images here</b>They'll all be added with the settings below</div>
+      <input type="file" accept="image/*" multiple onchange="onBulkSelect(this)">
+    </div>
+    <div class="row2" style="margin-top:14px;">
+      <div class="fg">
+        <label>APPLY CATEGORY TO ALL</label>
+        <select id="bulk-cat"></select>
+      </div>
+      <div class="fg">
+        <label>DEVICE FIT</label>
+        <select id="bulk-dev">
+          <option value="Desktop">Desktop</option>
+          <option value="Mobile">Mobile</option>
+          <option value="Both">Both</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>BADGE</label>
+      <select id="bulk-badge">
+        <option value="4K">4K</option>
+        <option value="HD">HD</option>
+        <option value="AMOLED">AMOLED</option>
+        <option value="FHD">FHD</option>
+      </select>
+    </div>
+    <div id="bulk-queue" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="bulk-start-btn" onclick="startBulkUpload()" disabled>⬆ Upload All</button>
+      <button class="btn btn-ghost" onclick="closeModal('bulk-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ─── Confirm Dialog ─── -->
 <div class="cbox" id="confirm-box">
   <div class="ccard">
@@ -503,8 +562,9 @@ img{display:block;max-width:100%;}
 <!-- ─── Toast ─── -->
 <div class="toast" id="toast"></div>
 
-<script src="db.js"></script>
-<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="image-utils.js"></script>
 <script>
 // ─── AUTH ───────────────────────────────────────────────
 const PW = "om_sankesara652008";
@@ -523,20 +583,36 @@ function doLogin(){
     setTimeout(()=>e.style.display='none',3000);
   }
 }
-
 function togglePwd(){
   const i = document.getElementById('pwd-input');
   i.type = i.type==='password' ? 'text' : 'password';
 }
-
 function doLogout(){
   sessionStorage.removeItem('ap_admin');
   location.reload();
 }
 
+// ─── BACKEND STATUS BANNER ───────────────────────────────
+function checkBackendStatus(){
+  if(!sbConfigured()){
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#3a1414;border-bottom:1px solid var(--red);color:#ff9d9d;padding:12px 20px;font-size:13px;text-align:center;font-weight:600;';
+    bar.innerHTML = '🚫 Supabase is not connected. Edit supabase-client.js and add your Project URL + Publishable key before using this panel.';
+    document.getElementById('admin-app').prepend(bar);
+    return false;
+  }
+  return true;
+}
+
 // ─── INIT ────────────────────────────────────────────────
-function initAdminApp(){
-  loadAllFromStorage();
+let adminWP  = [];
+let adminCAT = [];
+let adminCFG = {};
+
+async function initAdminApp(){
+  const ok = checkBackendStatus();
+  if(!ok) return; // don't attempt to load/save without a real backend
+  await loadAllData();
   loadDashboard();
   loadHeroTab();
   loadWallpapersTab();
@@ -548,15 +624,15 @@ function initAdminApp(){
   loadAboutPreview();
 }
 
-// current working copies
-let adminWP  = [];
-let adminCAT = [];
-let adminCFG = {};
-
-function loadAllFromStorage(){
-  adminWP  = apGetSettings('wallpapers',  WALLPAPERS).map(w=>({...w}));
-  adminCAT = apGetSettings('categories', CATEGORIES).map(c=>({...c}));
-  adminCFG = apGetSettings('siteSettings', {});
+async function loadAllData(){
+  try{
+    adminWP  = await sbFetchWallpapers();
+    adminCAT = await sbFetchCategories();
+    adminCFG = await sbFetchSettings();
+  }catch(e){
+    console.error('Failed to load data from Supabase:', e);
+    toast('❌ Could not load data from Supabase — check console');
+  }
 }
 
 // ─── SIDEBAR / TABS ──────────────────────────────────────
@@ -569,7 +645,6 @@ function showTab(name){
   if(name==='categories') renderCatList();
   closeSidebar();
 }
-
 function toggleSidebar(force){
   const sb=document.getElementById('sidebar');
   const bd=document.getElementById('sb-bd');
@@ -581,22 +656,24 @@ function closeSidebar(){ toggleSidebar(false); }
 
 // ─── DASHBOARD ───────────────────────────────────────────
 function loadDashboard(){
+  const totalViews = adminWP.reduce((s,w)=>s+(w.views||0),0);
+  const totalDownloads = adminWP.reduce((s,w)=>s+(w.downloads||0),0);
   const stats = document.getElementById('dash-stats');
   stats.innerHTML = `
     <div class="stat"><div class="n">${adminWP.length}</div><div class="l">Wallpapers</div></div>
     <div class="stat"><div class="n">${adminCAT.length}</div><div class="l">Categories</div></div>
-    <div class="stat"><div class="n">${[...new Set(adminWP.map(w=>w.category))].length}</div><div class="l">Active Cats</div></div>
-    <div class="stat"><div class="n">4K</div><div class="l">Avg Quality</div></div>`;
+    <div class="stat"><div class="n">${totalViews}</div><div class="l">Total Views</div></div>
+    <div class="stat"><div class="n">${totalDownloads}</div><div class="l">Downloads</div></div>`;
 
   const recent = document.getElementById('dash-recent');
-  recent.innerHTML = adminWP.slice(-4).reverse().map(w=>`
+  recent.innerHTML = [...adminWP].slice(-4).reverse().map(w=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
       <img src="${w._resolvedImg||w.img||''}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
       <div style="flex:1;overflow:hidden;">
         <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.title}</div>
-        <div style="font-size:11px;color:var(--muted);">${w.category} · ${w.device}</div>
+        <div style="font-size:11px;color:var(--muted);">${w.category} · 👁 ${w.views||0} · ⬇ ${w.downloads||0}</div>
       </div>
-    </div>`).join('');
+    </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">No wallpapers yet.</p>';
 }
 
 // ─── HERO ────────────────────────────────────────────────
@@ -609,39 +686,41 @@ function loadHeroTab(){
   document.getElementById('h-btn1').value    = s.btn1Text||'Explore Wallpapers →';
   document.getElementById('h-btn2').value    = s.btn2Text||'View Latest ✨';
 }
-
-async function loadHeroPreview(){
-  const url = await apGetImage('hero_upload');
-  if(url){
+function loadHeroPreview(){
+  if(adminCFG.heroImage){
     const p = document.getElementById('hero-img-prev');
-    p.src=url; p.classList.add('show');
+    p.src=adminCFG.heroImage; p.classList.add('show');
     document.getElementById('hero-img-status').textContent='Custom upload ✓';
   }
 }
-
-function saveHero(){
+let heroFilePending = null;
+async function saveHero(){
   adminCFG.heroEyebrow  = document.getElementById('h-eyebrow').value;
   adminCFG.heroH1Line1  = document.getElementById('h-line1').value;
   adminCFG.heroH1Line2  = document.getElementById('h-line2').value;
   adminCFG.heroSubtitle = document.getElementById('h-sub').value;
   adminCFG.btn1Text     = document.getElementById('h-btn1').value;
   adminCFG.btn2Text     = document.getElementById('h-btn2').value;
-  apSaveSettings('siteSettings', adminCFG);
-  toast('✅ Hero section saved!');
+
+  try{
+    if(heroFilePending){
+      toast('⏳ Uploading hero image...');
+      const processed = await processImageForUpload(heroFilePending);
+      adminCFG.heroImage = await sbUploadFile('site-assets', `hero_${Date.now()}.webp`, processed.full);
+      heroFilePending = null;
+    }
+    await sbSaveSettings(adminCFG);
+    toast('✅ Hero section saved!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Failed to save — check console');
+  }
 }
 
 // ─── WALLPAPERS ──────────────────────────────────────────
-let wpImgPending = null; // blob for the current modal upload
+let wpImgPending = null;
 
-async function loadWallpapersTab(){
-  // resolve db: images
-  for(const w of adminWP){
-    if(!w._resolvedImg){
-      w._resolvedImg = w.img&&w.img.startsWith('db:')
-        ? await apGetImage(w.img.slice(3)) || '' : w.img||'';
-    }
-  }
-  // populate category filter
+function loadWallpapersTab(){
   const sel = document.getElementById('wp-filter-cat');
   sel.innerHTML = '<option value="all">All Categories</option>' +
     adminCAT.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
@@ -666,11 +745,11 @@ function renderWpGrid(list){
       <div class="wac-thumb">
         <span class="wac-badge">${w.badge||'4K'}</span>
         <img src="${w._resolvedImg||w.img||''}" alt="${w.title}" loading="lazy"
-          onerror="this.src='';this.style.background='#1a1a22'">
+          onerror="this.style.background='#1a1a22'">
       </div>
       <div class="wac-body">
         <div class="wac-title">${w.title}</div>
-        <div class="wac-meta">${capitalize(w.category)} · ${w.device}</div>
+        <div class="wac-meta">${capitalize(w.category)} · ${w.device} · 👁${w.views||0} ⬇${w.downloads||0}</div>
         <div class="wac-acts">
           <button class="btn btn-ghost btn-sm" onclick="openWpModal(${w.id})">✏️ Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteWp(${w.id})">🗑️</button>
@@ -681,11 +760,9 @@ function renderWpGrid(list){
 
 function openWpModal(id){
   wpImgPending=null;
-  const modal=document.getElementById('wp-modal');
   const prev=document.getElementById('wm-prev');
   prev.classList.remove('show'); prev.src='';
 
-  // Populate category dropdown
   document.getElementById('wm-cat').innerHTML=
     adminCAT.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
 
@@ -712,69 +789,171 @@ async function saveWpModal(){
   if(!title){toast('⚠️ Please enter a title');return;}
 
   const editId=parseInt(document.getElementById('wm-edit-id').value)||null;
-  const cat  =document.getElementById('wm-cat').value;
-  const dev  =document.getElementById('wm-dev').value;
-  const badge=document.getElementById('wm-badge').value;
-  const imgKey= editId ? `wp_${editId}` : `wp_${Date.now()}`;
+  const category=document.getElementById('wm-cat').value;
+  const device  =document.getElementById('wm-dev').value;
+  const badge   =document.getElementById('wm-badge').value;
 
-  if(wpImgPending){
-    await apSaveImage(imgKey, wpImgPending);
-    wpImgPending=null;
-  }
+  const saveBtn = document.querySelector('#wp-modal .btn-gold');
+  const originalLabel = saveBtn.textContent;
+  saveBtn.textContent = '⏳ Processing...';
+  saveBtn.disabled = true;
 
-  if(editId){
-    const w=adminWP.find(x=>x.id===editId);
-    if(w){
-      w.title=title; w.category=cat; w.device=dev; w.badge=badge;
-      if(wpImgPending!==null||document.getElementById('wm-prev').src) {
-        w.img=`db:${imgKey}`;
-        w._resolvedImg=document.getElementById('wm-prev').src||w._resolvedImg;
-      }
+  try{
+    let files = null;
+    let dims = {};
+    if(wpImgPending){
+      const processed = await processImageForUpload(wpImgPending);
+      files = { full: processed.full, thumb: processed.thumb };
+      dims = { width: processed.width, height: processed.height };
     }
-  } else {
-    const newId=Math.max(0,...adminWP.map(x=>x.id))+1;
-    const newW={id:newId,title,category:cat,device:dev,badge,img:`db:${imgKey}`,
-      _resolvedImg:document.getElementById('wm-prev').src||''};
-    adminWP.push(newW);
-  }
+    if(editId){
+      await sbUpdateWallpaper(editId, { title, category, device, badge, ...dims }, files);
+    } else {
+      if(!files){ toast('⚠️ Please upload an image'); saveBtn.textContent=originalLabel; saveBtn.disabled=false; return; }
+      await sbAddWallpaper({ title, category, device, badge, files, ...dims });
+    }
+    adminWP = await sbFetchWallpapers();
 
-  persistWallpapers();
-  closeModal('wp-modal');
-  renderWpGrid(adminWP);
-  loadDashboard();
-  toast(editId?'✅ Wallpaper updated!':'✅ Wallpaper added!');
+    wpImgPending=null;
+    closeModal('wp-modal');
+    renderWpGrid(adminWP);
+    loadDashboard();
+    toast(editId?'✅ Wallpaper updated!':'✅ Wallpaper added!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Something went wrong — check console');
+  }finally{
+    saveBtn.textContent = originalLabel;
+    saveBtn.disabled = false;
+  }
 }
 
 function deleteWp(id){
-  confirmDialog('Delete Wallpaper','Remove this wallpaper permanently?',()=>{
-    adminWP=adminWP.filter(w=>w.id!==id);
-    apDeleteImage(`wp_${id}`);
-    persistWallpapers();
-    renderWpGrid(adminWP);
-    loadDashboard();
-    toast('🗑️ Wallpaper deleted');
+  confirmDialog('Delete Wallpaper','Remove this wallpaper permanently?',async ()=>{
+    try{
+      await sbDeleteWallpaper(id);
+      adminWP = await sbFetchWallpapers();
+      renderWpGrid(adminWP);
+      loadDashboard();
+      toast('🗑️ Wallpaper deleted');
+    }catch(err){
+      console.error(err);
+      toast('❌ Delete failed — check console');
+    }
   });
 }
 
-function persistWallpapers(){
-  const toStore=adminWP.map(w=>{const{_resolvedImg,...rest}=w;return rest;});
-  apSaveSettings('wallpapers',toStore);
+// ─── BULK UPLOAD ─────────────────────────────────────────
+let bulkQueue = [];
+
+function openBulkModal(){
+  bulkQueue = [];
+  document.getElementById('bulk-queue').innerHTML = '';
+  document.getElementById('bulk-start-btn').disabled = true;
+  document.getElementById('bulk-cat').innerHTML =
+    adminCAT.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  showModal('bulk-modal');
+}
+
+function onBulkSelect(input){
+  addFilesToBulkQueue(Array.from(input.files));
+}
+function onBulkDrop(e){
+  e.preventDefault();
+  document.getElementById('bulk-zone').classList.remove('drag');
+  addFilesToBulkQueue(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+}
+
+function addFilesToBulkQueue(files){
+  files.forEach(file=>{
+    bulkQueue.push({ file, name: file.name, status: 'pending' });
+  });
+  renderBulkQueue();
+  document.getElementById('bulk-start-btn').disabled = bulkQueue.length === 0;
+}
+
+function renderBulkQueue(){
+  const el = document.getElementById('bulk-queue');
+  el.innerHTML = bulkQueue.map((item,i)=>`
+    <div class="bulk-item" id="bulk-item-${i}">
+      <img src="" data-idx="${i}">
+      <div class="name">${item.name}</div>
+      <div class="status ${item.status}">${statusLabel(item.status)}</div>
+      <button class="rm" onclick="removeBulkItem(${i})" title="Remove">✕</button>
+    </div>`).join('');
+  bulkQueue.forEach((item,i)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = el.querySelector(`img[data-idx="${i}"]`);
+      if(img) img.src = e.target.result;
+    };
+    reader.readAsDataURL(item.file);
+  });
+}
+
+function statusLabel(s){
+  return { pending:'Waiting', working:'Uploading…', done:'✓ Done', error:'✕ Failed' }[s] || s;
+}
+
+function removeBulkItem(i){
+  bulkQueue.splice(i,1);
+  renderBulkQueue();
+  document.getElementById('bulk-start-btn').disabled = bulkQueue.length === 0;
+}
+
+async function startBulkUpload(){
+  if(!bulkQueue.length) return;
+  const category = document.getElementById('bulk-cat').value;
+  const device    = document.getElementById('bulk-dev').value;
+  const badge     = document.getElementById('bulk-badge').value;
+  const startBtn  = document.getElementById('bulk-start-btn');
+  startBtn.disabled = true;
+  startBtn.textContent = '⏳ Uploading...';
+
+  for(let i=0;i<bulkQueue.length;i++){
+    const item = bulkQueue[i];
+    item.status = 'working';
+    updateBulkItemStatus(i);
+    try{
+      const processed = await processImageForUpload(item.file);
+      const title = item.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g,' ').trim() || 'Untitled Wallpaper';
+      await sbAddWallpaper({
+        title, category, device, badge,
+        files: { full: processed.full, thumb: processed.thumb },
+        width: processed.width, height: processed.height
+      });
+      item.status = 'done';
+    }catch(err){
+      console.error('Bulk upload item failed:', err);
+      item.status = 'error';
+    }
+    updateBulkItemStatus(i);
+  }
+
+  startBtn.textContent = '⬆ Upload All';
+  startBtn.disabled = false;
+  adminWP = await sbFetchWallpapers();
+  renderWpGrid(adminWP);
+  loadDashboard();
+  toast('✅ Bulk upload complete!');
+}
+
+function updateBulkItemStatus(i){
+  const el = document.getElementById(`bulk-item-${i}`);
+  if(!el) return;
+  const statusEl = el.querySelector('.status');
+  statusEl.className = `status ${bulkQueue[i].status}`;
+  statusEl.textContent = statusLabel(bulkQueue[i].status);
 }
 
 // ─── CATEGORIES ──────────────────────────────────────────
 let catImgPending=null;
 
-async function renderCatList(){
-  for(const c of adminCAT){
-    if(!c._resolvedImg){
-      c._resolvedImg=c.img&&c.img.startsWith('db:')
-        ? await apGetImage(c.img.slice(3))||'' : c.img||'';
-    }
-  }
+function renderCatList(){
   const el=document.getElementById('cat-admin-list');
   el.innerHTML=adminCAT.map(c=>`
     <div class="cat-row">
-      <img class="cat-thumb" src="${c._resolvedImg||''}" alt="${c.name}"
+      <img class="cat-thumb" src="${c._resolvedImg||c.img||''}" alt="${c.name}"
         onerror="this.style.background='#1a1a22'">
       <div class="cat-info">
         <div class="cat-name">${c.icon} ${c.name}</div>
@@ -816,45 +995,42 @@ async function saveCatModal(){
 
   const editId=document.getElementById('cm-edit-id').value||null;
   const catId=editId||name.toLowerCase().replace(/\s+/g,'-');
-  const imgKey=`cat_${catId}`;
 
-  if(catImgPending){
-    await apSaveImage(imgKey, catImgPending);
-    catImgPending=null;
-  }
-
-  if(editId){
-    const c=adminCAT.find(x=>x.id===editId);
-    if(c){
-      c.name=name; c.icon=icon;
-      if(document.getElementById('cm-prev').src){
-        c.img=`db:${imgKey}`;
-        c._resolvedImg=document.getElementById('cm-prev').src;
-      }
+  try{
+    let file = null;
+    if(catImgPending){
+      const processed = await processImageForUpload(catImgPending);
+      file = processed.thumb;
     }
-  } else {
-    adminCAT.push({id:catId,name,icon,img:`db:${imgKey}`,_resolvedImg:document.getElementById('cm-prev').src||''});
-  }
+    if(editId){
+      await sbUpdateCategory(editId, { name, icon }, file);
+    } else {
+      await sbAddCategory({ id: catId, name, icon, file });
+    }
+    adminCAT = await sbFetchCategories();
 
-  persistCategories();
-  closeModal('cat-modal');
-  renderCatList();
-  toast(editId?'✅ Category updated!':'✅ Category added!');
+    catImgPending=null;
+    closeModal('cat-modal');
+    renderCatList();
+    toast(editId?'✅ Category updated!':'✅ Category added!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Something went wrong — check console');
+  }
 }
 
 function deleteCat(id){
-  confirmDialog('Delete Category','Remove this category? Wallpapers won\'t be deleted.',()=>{
-    adminCAT=adminCAT.filter(c=>c.id!==id);
-    apDeleteImage(`cat_${id}`);
-    persistCategories();
-    renderCatList();
-    toast('🗑️ Category deleted');
+  confirmDialog('Delete Category','Remove this category? Wallpapers will not be deleted.',async ()=>{
+    try{
+      await sbDeleteCategory(id);
+      adminCAT = await sbFetchCategories();
+      renderCatList();
+      toast('🗑️ Category deleted');
+    }catch(err){
+      console.error(err);
+      toast('❌ Delete failed — check console');
+    }
   });
-}
-
-function persistCategories(){
-  const toStore=adminCAT.map(c=>{const{_resolvedImg,...rest}=c;return rest;});
-  apSaveSettings('categories',toStore);
 }
 
 // ─── ABOUT ────────────────────────────────────────────────
@@ -862,26 +1038,39 @@ function loadAboutTab(){
   const s=adminCFG;
   document.getElementById('a-h2').value  =s.aboutH2 ||'Quality over quantity, always.';
   document.getElementById('a-p1').value  =s.aboutP1 ||'AetherPixels started as a small side project: a place to keep the wallpapers we actually wanted to use.';
-  document.getElementById('a-p2').value  =s.aboutP2 ||'Every wallpaper here is checked for resolution, composition, and color before it\'s added.';
+  document.getElementById('a-p2').value  =s.aboutP2 ||'Every wallpaper here is checked for resolution, composition, and color before it is added.';
   document.getElementById('a-stat1').value=s.aboutStat1||'500';
   document.getElementById('a-stat2').value=s.aboutStat2||'6';
   document.getElementById('a-stat3').value=s.aboutStat3||'4K';
 }
-
-async function loadAboutPreview(){
-  const url=await apGetImage('about_upload');
-  if(url){const p=document.getElementById('about-img-prev');p.src=url;p.classList.add('show');}
+let aboutFilePending = null;
+function loadAboutPreview(){
+  if(adminCFG.aboutImage){
+    const p=document.getElementById('about-img-prev');
+    p.src=adminCFG.aboutImage;p.classList.add('show');
+  }
 }
-
-function saveAbout(){
+async function saveAbout(){
   adminCFG.aboutH2   =document.getElementById('a-h2').value;
   adminCFG.aboutP1   =document.getElementById('a-p1').value;
   adminCFG.aboutP2   =document.getElementById('a-p2').value;
   adminCFG.aboutStat1=document.getElementById('a-stat1').value;
   adminCFG.aboutStat2=document.getElementById('a-stat2').value;
   adminCFG.aboutStat3=document.getElementById('a-stat3').value;
-  apSaveSettings('siteSettings',adminCFG);
-  toast('✅ About page saved!');
+
+  try{
+    if(aboutFilePending){
+      toast('⏳ Uploading about image...');
+      const processed = await processImageForUpload(aboutFilePending);
+      adminCFG.aboutImage = await sbUploadFile('site-assets', `about_${Date.now()}.webp`, processed.full);
+      aboutFilePending = null;
+    }
+    await sbSaveSettings(adminCFG);
+    toast('✅ About page saved!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Failed to save — check console');
+  }
 }
 
 // ─── SOCIAL ───────────────────────────────────────────────
@@ -893,31 +1082,30 @@ function loadSocialTab(){
   document.getElementById('s-gmail').value=s.gmail    ||'aetherpixels1@gmail.com';
   updateSocialPreviews();
 }
-
 function updateSocialPreviews(){
-  const ig=document.getElementById('s-ig').value;
-  const tw=document.getElementById('s-tw').value;
-  const pt=document.getElementById('s-pt').value;
+  document.getElementById('prev-ig').href   =document.getElementById('s-ig').value||'#';
+  document.getElementById('prev-tw').href   =document.getElementById('s-tw').value||'#';
+  document.getElementById('prev-pt').href   =document.getElementById('s-pt').value||'#';
   const gm=document.getElementById('s-gmail').value;
-  document.getElementById('prev-ig').href   =ig||'#';
-  document.getElementById('prev-tw').href   =tw||'#';
-  document.getElementById('prev-pt').href   =pt||'#';
   document.getElementById('prev-gmail').href=gm?'mailto:'+gm:'#';
 }
-
-document.getElementById('s-ig')?.addEventListener('input',updateSocialPreviews);
-document.getElementById('s-tw')?.addEventListener('input',updateSocialPreviews);
-document.getElementById('s-pt')?.addEventListener('input',updateSocialPreviews);
-document.getElementById('s-gmail')?.addEventListener('input',updateSocialPreviews);
-
-function saveSocial(){
+['s-ig','s-tw','s-pt','s-gmail'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',updateSocialPreviews);
+});
+async function saveSocial(){
   adminCFG.instagram=document.getElementById('s-ig').value;
   adminCFG.twitter  =document.getElementById('s-tw').value;
   adminCFG.pinterest=document.getElementById('s-pt').value;
   adminCFG.gmail    =document.getElementById('s-gmail').value;
-  apSaveSettings('siteSettings',adminCFG);
-  updateSocialPreviews();
-  toast('✅ Social links saved!');
+
+  try{
+    await sbSaveSettings(adminCFG);
+    updateSocialPreviews();
+    toast('✅ Social links saved!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Failed to save — check console');
+  }
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────
@@ -926,31 +1114,26 @@ function loadSettingsTab(){
   document.getElementById('cfg-tag').value  =adminCFG.tagline  ||'Premium Wallpapers for Every Screen';
   document.getElementById('cfg-copy').value =adminCFG.copyright||'© 2026 AetherPixels. All rights reserved.';
 }
-
-function saveSettings(){
+async function saveSettings(){
   adminCFG.siteName  =document.getElementById('cfg-name').value;
   adminCFG.tagline   =document.getElementById('cfg-tag').value;
   adminCFG.copyright =document.getElementById('cfg-copy').value;
-  apSaveSettings('siteSettings',adminCFG);
-  toast('✅ Settings saved!');
+
+  try{
+    await sbSaveSettings(adminCFG);
+    toast('✅ Settings saved!');
+  }catch(err){
+    console.error(err);
+    toast('❌ Failed to save — check console');
+  }
 }
 
 // ─── RESET ────────────────────────────────────────────────
 function confirmReset(){
   confirmDialog('Reset Everything?',
-    'All your changes (wallpapers, text, images, links) will be deleted and defaults restored. Cannot be undone.',
-    async ()=>{
-      localStorage.clear();
-      // also clear IndexedDB
-      const db=await apOpenDB().catch(()=>null);
-      if(db){
-        const tx=db.transaction('images','readwrite');
-        tx.objectStore('images').clear();
-      }
-      toast('🔄 Reset complete — reloading...');
-      setTimeout(()=>location.reload(),1200);
-    },
-    'Yes, Reset All'
+    'This app no longer stores data locally. To fully reset, delete rows in Supabase Table Editor (wallpapers, categories, site_settings) directly.',
+    ()=>{ toast('Open your Supabase dashboard → Table Editor to delete data.'); },
+    'Got it'
   );
 }
 
@@ -960,13 +1143,10 @@ function handleUpload(input, previewId, dbKey, zoneId){
   if(!file) return;
   readFilePreview(file, previewId);
 
-  // store pending blob based on zone/key
-  if(zoneId==='wm-zone')      wpImgPending=file;
-  else if(zoneId==='cm-zone') catImgPending=file;
-  else {
-    // direct save for hero/about
-    apSaveImage(dbKey, file).then(()=>toast('🖼️ Image uploaded!'));
-  }
+  if(zoneId==='wm-zone')        wpImgPending=file;
+  else if(zoneId==='cm-zone')   catImgPending=file;
+  else if(zoneId==='hero-zone') heroFilePending=file;
+  else if(zoneId==='about-zone')aboutFilePending=file;
 }
 
 function readFilePreview(file, previewId){
@@ -979,7 +1159,6 @@ function readFilePreview(file, previewId){
   reader.readAsDataURL(file);
 }
 
-// drag and drop
 function onDrag(e,el){e.preventDefault();el.classList.add('drag');}
 function offDrag(e,el){el.classList.remove('drag');}
 function onDrop(e,zoneId,prevId,dbKey){
@@ -995,6 +1174,11 @@ function onDrop(e,zoneId,prevId,dbKey){
 // ─── MODAL HELPERS ────────────────────────────────────────
 function showModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.moverlay.show').forEach(m=>m.classList.remove('show'));
+  }
+});
 
 // ─── CONFIRM DIALOG ───────────────────────────────────────
 let _confirmCb=null;
@@ -1036,6 +1220,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(e.key==='Enter') doLogin();
   });
 });
+</script>
 </script>
 </body>
 </html>

@@ -93,8 +93,8 @@
   </div>
 </footer>
 
-<script src="db.js"></script>
-<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
 <script src="script.js"></script>
 <script>
   function getParam(name){
@@ -102,7 +102,7 @@
   }
 
   function buildFilterBar(active){
-    const cats = window.CATEGORIES || CATEGORIES;
+    const cats = window.CATEGORIES || [];
     const all = [{id:"all", name:"All", icon:"✨"}, ...cats];
     const bar = document.querySelector("#filter-bar");
     bar.innerHTML = all.map(c => `
@@ -111,8 +111,8 @@
   }
 
   function loadCategory(){
-    const cats = window.CATEGORIES || CATEGORIES;
-    const wps  = window.WALLPAPERS || WALLPAPERS;
+    const cats = window.CATEGORIES || [];
+    const wps  = window.WALLPAPERS || [];
     const cat = getParam("cat") || "all";
     const q = (getParam("q") || "").trim().toLowerCase();
     buildFilterBar(cat);
@@ -136,10 +136,12 @@
     renderWallpaperGrid("#wp-grid", list);
   }
 
-  apApplyOverrides().catch(e=>console.error(e)).finally(()=>{
-    loadCategory();
-    window.addEventListener("popstate", loadCategory);
-  });
+  sbApplyToPage()
+    .catch(e=>console.error(e))
+    .finally(()=>{
+      loadCategory();
+      window.addEventListener("popstate", loadCategory);
+    });
 </script>
 </body>
 </html>

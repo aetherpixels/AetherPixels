@@ -114,14 +114,16 @@
   </div>
 </footer>
 
-<script src="db.js"></script>
-<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
 <script src="script.js"></script>
 <script>
-  apApplyOverrides().catch(e=>console.error(e)).finally(()=>{
-    renderCategoryGrid("#cat-grid", window.CATEGORIES || CATEGORIES);
-    renderWallpaperGrid("#latest-grid", (window.WALLPAPERS || WALLPAPERS).slice(0,8));
-  });
+  sbApplyToPage()
+    .catch(e=>console.error(e))
+    .finally(()=>{
+      renderCategoryGrid("#cat-grid", window.CATEGORIES || []);
+      renderWallpaperGrid("#latest-grid", (window.WALLPAPERS || []).slice(0,8));
+    });
 </script>
 </body>
 </html>
