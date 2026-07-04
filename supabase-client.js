@@ -276,4 +276,10 @@ function apApplySettingsToDOMFromSupabase(s){
   if(s.aboutH2) document.querySelectorAll(".about-h2").forEach(el => el.textContent = s.aboutH2);
   if(s.aboutP1) document.querySelectorAll(".about-p1").forEach(el => el.textContent = s.aboutP1);
   if(s.aboutP2) document.querySelectorAll(".about-p2").forEach(el => el.textContent = s.aboutP2);
+  // These were previously saved by the admin panel but never actually
+  // applied to the live page — fixed so uploads/edits here now show up.
+  if(s.aboutImage) document.querySelectorAll(".about-image").forEach(img => img.src = s.aboutImage);
+  if(s.aboutStat1) document.querySelectorAll(".about-stat1").forEach(el => el.textContent = s.aboutStat1);
+  if(s.aboutStat2) document.querySelectorAll(".about-stat2").forEach(el => el.textContent = s.aboutStat2);
+  if(s.aboutStat3) document.querySelectorAll(".about-stat3").forEach(el => el.textContent = s.aboutStat3);
 }
