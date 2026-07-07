@@ -46,13 +46,21 @@ $$;
 
 -- ─────────────────────────────────────────────────────────────
 -- ⚠️ ACTION REQUIRED (one-time, manual):
--- 1. Supabase Dashboard → Authentication → Users → Add User
---    Create your admin account with an email + password.
+-- 1. Supabase Dashboard → Authentication → Users
+--    → If a user with email sankesaraom5@gmail.com already exists,
+--      click it → "..." menu → Reset Password, and set it to the
+--      password you want to use (do this directly in the dashboard,
+--      never in a SQL file or client-side code).
+--    → If it doesn't exist yet, click "Add User" → enter:
+--         Email:    sankesaraom5@gmail.com
+--         Password: (set it directly in the dashboard)
+--      → toggle "Auto Confirm User" ON so it can log in immediately.
 -- 2. Copy that user's UID (shown in the Users table).
--- 3. Run this, replacing the UID and email:
+-- 3. Run this, replacing the UID:
 --
 --    insert into admin_users (user_id, email)
---    values ('PASTE-YOUR-USER-UID-HERE', 'your@email.com');
+--    values ('PASTE-YOUR-USER-UID-HERE', 'sankesaraom5@gmail.com')
+--    on conflict (user_id) do update set email = excluded.email;
 --
 -- Until you do this, is_admin() returns false for everyone,
 -- meaning NO ONE (including you) can write data. Do this

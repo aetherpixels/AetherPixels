@@ -513,6 +513,26 @@ textarea:focus-visible,
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* ---------- Skeleton loaders ---------- */
+/* Shimmer placeholders matching real card dimensions, shown while
+   Supabase data is loading — feels premium instead of a blank/text wait. */
+@keyframes skeleton-shimmer{
+  0%{background-position:-200% 0;}
+  100%{background-position:200% 0;}
+}
+.skeleton{
+  background:linear-gradient(90deg, var(--card) 25%, #1e1e26 37%, var(--card) 63%);
+  background-size:200% 100%;
+  animation:skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius:var(--radius);
+  border:1px solid var(--card-border);
+}
+.skeleton-cat{aspect-ratio:3/4;}
+.skeleton-wp{aspect-ratio:3/4;}
+@media (prefers-reduced-motion: reduce){
+  .skeleton{animation:none;}
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width:1000px){
   .cat-grid{grid-template-columns:repeat(3,1fr);}

@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════════
+# NOT used by GitHub Pages — GH Pages has no mechanism to read
+# this file or set custom HTTP response headers at all.
+#
+# This file is here for the day AetherPixels moves to a host
+# that DOES support it (Netlify, Vercel, Cloudflare Pages all
+# read a file named exactly "_headers" in the site root and
+# apply these automatically, no server config needed).
+#
+# See README.md → "Security headers GitHub Pages can't set" for
+# the full explanation and current workarounds.
+# ═══════════════════════════════════════════════════════════
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';

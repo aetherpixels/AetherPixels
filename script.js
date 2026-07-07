@@ -175,6 +175,9 @@ function openDownloadModal(id){
   const w = list.find(x => x.id === id);
   if(!w) return;
 
+  const safeTitle = escapeHtml(w.title || "Untitled Wallpaper");
+  const safeImg = escapeHtml(w._resolvedImg || w.img || "");
+
   let modal = document.querySelector(".dl-modal");
   if(modal) modal.remove();
 
@@ -182,12 +185,12 @@ function openDownloadModal(id){
   modal.className = "dl-modal";
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
-  modal.setAttribute("aria-label", `Download options for ${w.title}`);
+  modal.setAttribute("aria-label", `Download options for ${safeTitle}`);
   modal.innerHTML = `
     <div class="dl-modal-card">
       <button class="dl-close" aria-label="Close dialog">✕</button>
-      <img class="dl-modal-thumb" src="${w._resolvedImg || w.img}" alt="${w.title}">
-      <h3>Download "${w.title}"</h3>
+      <img class="dl-modal-thumb" src="${safeImg}" alt="${safeTitle}">
+      <h3>Download "${safeTitle}"</h3>
       <p>Choose a size to download the right fit.</p>
       <div class="dl-options">
         <button class="dl-option" data-mode="mobile" aria-label="Download for mobile, 1080 by 1920">
@@ -223,6 +226,37 @@ function openDownloadModal(id){
   modal.querySelector(".dl-option")?.focus();
 }
 
+// ---------- Retry UI for failed data loads ----------
+// Shown only when a fetch genuinely FAILS (network error, Supabase
+// down, etc.) — not when data is just legitimately empty. Distinct
+// from the plain "No wallpapers found" message so visitors know
+// this is a temporary problem worth retrying, not an empty catalog.
+function renderLoadError(targetSelector){
+  const el = document.querySelector(targetSelector);
+  if(!el) return;
+  el.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+      <p style="color:var(--muted);margin-bottom:14px;">⚠️ Couldn't load this right now. Check your connection and try again.</p>
+      <button class="btn btn-ghost" onclick="location.reload()">🔄 Retry</button>
+    </div>
+  `;
+}
+
+// ---------- XSS protection ----------
+// Wallpaper titles, category names, etc. come from the admin panel and
+// get inserted into innerHTML. Without escaping, a title like
+// <img src=x onerror=alert(1)> would execute for every visitor. This
+// escapes the 5 characters that matter for HTML injection.
+function escapeHtml(str){
+  if(str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // ---------- Render category cards ----------
 function renderCategoryGrid(targetSelector, categories){
   const el = document.querySelector(targetSelector);
@@ -231,15 +265,22 @@ function renderCategoryGrid(targetSelector, categories){
     el.innerHTML = `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Categories are loading or none are available yet. If this persists, check the browser console for errors.</p>`;
     return;
   }
-  const cards = categories.map(c => {
+  const cards = categories.map((c, i) => {
     try{
-      const name = c.name || "Category";
-      const icon = c.icon || "🖼️";
-      const img = c._resolvedImg || c.img || "";
+      const name = escapeHtml(c.name || "Category");
+      const icon = escapeHtml(c.icon || "🖼️");
+      const img = escapeHtml(c._resolvedImg || c.img || "");
+      const id = escapeHtml(c.id || "");
       if(!img) return "";
+      // First few cards are visible immediately on page load (above the
+      // fold) and compete for Largest Contentful Paint — load them eagerly
+      // with high priority. Everything after stays lazy as before.
+      const isAboveFold = i < 3;
+      const loadingAttr = isAboveFold ? "eager" : "lazy";
+      const priorityAttr = isAboveFold ? ' fetchpriority="high"' : "";
       return `
-        <a class="cat-card" href="category.html?cat=${c.id}" role="listitem" aria-label="Browse ${name} wallpapers">
-          <img src="${img}" alt="${name} wallpapers preview" loading="lazy" decoding="async" width="400" height="533">
+        <a class="cat-card" href="category.html?cat=${encodeURIComponent(id)}" role="listitem" aria-label="Browse ${name} wallpapers">
+          <img src="${img}" alt="${name} wallpapers preview" loading="${loadingAttr}"${priorityAttr} decoding="async" width="400" height="533">
           <div class="cat-info">
             <div class="cat-name"><span aria-hidden="true">${icon}</span> ${name}</div>
             <div class="cat-tags">
@@ -270,21 +311,23 @@ function renderWallpaperGrid(targetSelector, wallpapers){
   // entire grid and taking every other wallpaper down with it.
   const cards = wallpapers.map(w => {
     try{
-      const title = w.title || "Untitled Wallpaper";
+      const title = escapeHtml(w.title || "Untitled Wallpaper");
       const category = w.category || "uncategorized";
-      const device = w.device || "Desktop";
-      const badge = w.badge || "4K";
-      const img = w._resolvedImg || w.img || "";
+      const categorySafe = escapeHtml(category);
+      const device = escapeHtml(w.device || "Desktop");
+      const badge = escapeHtml(w.badge || "4K");
+      const img = escapeHtml(w._resolvedImg || w.img || "");
+      const urlId = encodeURIComponent(w.id);
       if(!img) return "";
       return `
         <div class="wp-card" role="listitem">
-          <a class="wp-thumb" href="wallpaper.html?id=${w.id}" aria-label="View ${title} wallpaper details">
+          <a class="wp-thumb" href="wallpaper.html?id=${urlId}" aria-label="View ${title} wallpaper details">
             <span class="wp-badge" aria-hidden="true">${badge}</span>
-            <img src="${img}" alt="${title} — ${capitalize(category)} wallpaper" loading="lazy" decoding="async" width="480" height="640">
+            <img src="${img}" alt="${title} — ${escapeHtml(capitalize(category))} wallpaper" loading="lazy" decoding="async" width="480" height="640">
           </a>
           <div class="wp-body">
-            <a class="wp-title" href="wallpaper.html?id=${w.id}">${title}</a>
-            <div class="wp-meta">${capitalize(category)} • ${device}</div>
+            <a class="wp-title" href="wallpaper.html?id=${urlId}">${title}</a>
+            <div class="wp-meta">${escapeHtml(capitalize(category))} • ${device}</div>
             <button class="wp-download" onclick="openDownloadModal(${w.id})" aria-label="Download ${title}">⬇ Download</button>
           </div>
         </div>

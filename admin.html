@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel — AetherPixels</title>
+<link rel="icon" href="logo.png" type="image/png">
 <style>
 :root{
   --bg:#0a0a0c;--bg2:#111114;--card:#15151a;--border:#26262d;
@@ -301,7 +304,7 @@ img{display:block;max-width:100%;}
     <div class="tab" id="tab-hero">
       <div class="sec-hdr">
         <div><h2>🖼️ Hero Section</h2><p>Customize the main banner on the homepage.</p></div>
-        <button class="btn btn-gold" onclick="saveHero()">💾 Save Hero</button>
+        <button class="btn btn-gold" onclick="saveHero(this)">💾 Save Hero</button>
       </div>
       <div class="g2">
         <div class="acard">
@@ -359,7 +362,7 @@ img{display:block;max-width:100%;}
     <div class="tab" id="tab-about">
       <div class="sec-hdr">
         <div><h2>📄 About Page</h2><p>Edit your story and stats.</p></div>
-        <button class="btn btn-gold" onclick="saveAbout()">💾 Save About</button>
+        <button class="btn btn-gold" onclick="saveAbout(this)">💾 Save About</button>
       </div>
       <div class="g2">
         <div class="acard">
@@ -392,7 +395,7 @@ img{display:block;max-width:100%;}
     <div class="tab" id="tab-social">
       <div class="sec-hdr">
         <div><h2>🔗 Social & Contact</h2><p>Update your social links and contact email.</p></div>
-        <button class="btn btn-gold" onclick="saveSocial()">💾 Save Links</button>
+        <button class="btn btn-gold" onclick="saveSocial(this)">💾 Save Links</button>
       </div>
       <div class="acard">
         <h3>📱 Social Media</h3>
@@ -418,7 +421,7 @@ img{display:block;max-width:100%;}
     <div class="tab" id="tab-settings">
       <div class="sec-hdr">
         <div><h2>⚙️ Site Settings</h2><p>Global settings that apply across every page.</p></div>
-        <button class="btn btn-gold" onclick="saveSettings()">💾 Save Settings</button>
+        <button class="btn btn-gold" onclick="saveSettings(this)">💾 Save Settings</button>
       </div>
       <div class="acard">
         <h3>🌐 General</h3>
@@ -451,7 +454,7 @@ img{display:block;max-width:100%;}
       <div class="hint"><b>Click or drag image here</b>JPG/PNG/WebP · Any resolution</div>
       <input type="file" accept="image/*" onchange="handleUpload(this,'wm-prev','wm_upload','wm-zone')">
     </div>
-    <div class="fg" style="margin-top:14px;"><label>TITLE</label><input id="wm-name" placeholder="Wallpaper title"></div>
+    <div class="fg" style="margin-top:14px;"><label>TITLE</label><input id="wm-name" placeholder="Wallpaper title" maxlength="200"></div>
     <div class="row2">
       <div class="fg">
         <label>CATEGORY</label>
@@ -564,11 +567,12 @@ img{display:block;max-width:100%;}
 </div>
 
 <!-- ─── Toast ─── -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
 <script src="image-utils.js"></script>
+<script src="script.js"></script>
 <script>
 // ─── AUTH (Supabase Auth — real session-based authentication) ──
 // The admin password used to be a plaintext string sitting in this
@@ -748,10 +752,10 @@ function loadDashboard(){
   const recent = document.getElementById('dash-recent');
   recent.innerHTML = [...adminWP].slice(-4).reverse().map(w=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <img src="${w._resolvedImg||w.img||''}" alt="${w.title}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+      <img src="${escapeHtml(w._resolvedImg||w.img||'')}" alt="${escapeHtml(w.title)}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
       <div style="flex:1;overflow:hidden;">
-        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.title}</div>
-        <div style="font-size:11px;color:var(--muted);">${w.category} · 👁 ${w.views||0} · ⬇ ${w.downloads||0}</div>
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(w.title)}</div>
+        <div style="font-size:11px;color:var(--muted);">${escapeHtml(w.category)} · 👁 ${Number(w.views)||0} · ⬇ ${Number(w.downloads)||0}</div>
       </div>
     </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">No wallpapers yet.</p>';
 }
@@ -774,13 +778,16 @@ function loadHeroPreview(){
   }
 }
 let heroFilePending = null;
-async function saveHero(){
+async function saveHero(btn){
   adminCFG.heroEyebrow  = document.getElementById('h-eyebrow').value;
   adminCFG.heroH1Line1  = document.getElementById('h-line1').value;
   adminCFG.heroH1Line2  = document.getElementById('h-line2').value;
   adminCFG.heroSubtitle = document.getElementById('h-sub').value;
   adminCFG.btn1Text     = document.getElementById('h-btn1').value;
   adminCFG.btn2Text     = document.getElementById('h-btn2').value;
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
 
   try{
     if(heroFilePending){
@@ -793,7 +800,10 @@ async function saveHero(){
     toast('✅ Hero section saved!');
   }catch(err){
     console.error(err);
-    toast('❌ Failed to save — check console');
+    toast('❌ ' + (err.message || 'Failed to save — check console'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -803,7 +813,7 @@ let wpImgPending = null;
 function loadWallpapersTab(){
   const sel = document.getElementById('wp-filter-cat');
   sel.innerHTML = '<option value="all">All Categories</option>' +
-    adminCAT.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    adminCAT.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
   renderWpGrid(adminWP);
 }
 
@@ -823,13 +833,13 @@ function renderWpGrid(list){
   el.innerHTML = list.map(w=>`
     <div class="wac">
       <div class="wac-thumb">
-        <span class="wac-badge">${w.badge||'4K'}</span>
-        <img src="${w._resolvedImg||w.img||''}" alt="${w.title}" loading="lazy"
+        <span class="wac-badge">${escapeHtml(w.badge||'4K')}</span>
+        <img src="${escapeHtml(w._resolvedImg||w.img||'')}" alt="${escapeHtml(w.title)}" loading="lazy"
           onerror="this.style.background='#1a1a22'">
       </div>
       <div class="wac-body">
-        <div class="wac-title">${w.title}</div>
-        <div class="wac-meta">${capitalize(w.category)} · ${w.device} · 👁${w.views||0} ⬇${w.downloads||0}</div>
+        <div class="wac-title">${escapeHtml(w.title)}</div>
+        <div class="wac-meta">${escapeHtml(capitalize(w.category))} · ${escapeHtml(w.device)} · 👁${Number(w.views)||0} ⬇${Number(w.downloads)||0}</div>
         <div class="wac-acts">
           <button class="btn btn-ghost btn-sm" onclick="openWpModal(${w.id})">✏️ Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteWp(${w.id})">🗑️</button>
@@ -844,7 +854,7 @@ function openWpModal(id){
   prev.classList.remove('show'); prev.src='';
 
   document.getElementById('wm-cat').innerHTML=
-    adminCAT.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    adminCAT.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
 
   if(id){
     const w=adminWP.find(x=>x.id===id);
@@ -901,7 +911,7 @@ async function saveWpModal(){
     toast(editId?'✅ Wallpaper updated!':'✅ Wallpaper added!');
   }catch(err){
     console.error(err);
-    toast('❌ Something went wrong — check console');
+    toast('❌ ' + (err.message || 'Something went wrong — check console'));
   }finally{
     saveBtn.textContent = originalLabel;
     saveBtn.disabled = false;
@@ -931,7 +941,7 @@ function openBulkModal(){
   document.getElementById('bulk-queue').innerHTML = '';
   document.getElementById('bulk-start-btn').disabled = true;
   document.getElementById('bulk-cat').innerHTML =
-    adminCAT.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    adminCAT.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
   showModal('bulk-modal');
 }
 
@@ -956,9 +966,9 @@ function renderBulkQueue(){
   const el = document.getElementById('bulk-queue');
   el.innerHTML = bulkQueue.map((item,i)=>`
     <div class="bulk-item" id="bulk-item-${i}">
-      <img src="" data-idx="${i}" alt="${item.name} preview">
-      <div class="name">${item.name}</div>
-      <div class="status ${item.status}">${statusLabel(item.status)}</div>
+      <img src="" data-idx="${i}" alt="${escapeHtml(item.name)} preview">
+      <div class="name">${escapeHtml(item.name)}</div>
+      <div class="status ${item.status}">${escapeHtml(statusLabel(item.status))}</div>
       <button class="rm" onclick="removeBulkItem(${i})" title="Remove">✕</button>
     </div>`).join('');
   bulkQueue.forEach((item,i)=>{
@@ -1033,15 +1043,15 @@ function renderCatList(){
   const el=document.getElementById('cat-admin-list');
   el.innerHTML=adminCAT.map(c=>`
     <div class="cat-row">
-      <img class="cat-thumb" src="${c._resolvedImg||c.img||''}" alt="${c.name}"
+      <img class="cat-thumb" src="${escapeHtml(c._resolvedImg||c.img||'')}" alt="${escapeHtml(c.name)}"
         onerror="this.style.background='#1a1a22'">
       <div class="cat-info">
-        <div class="cat-name">${c.icon} ${c.name}</div>
-        <div class="cat-meta">ID: ${c.id} · ${adminWP.filter(w=>w.category===c.id).length} wallpapers</div>
+        <div class="cat-name">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</div>
+        <div class="cat-meta">ID: ${escapeHtml(c.id)} · ${adminWP.filter(w=>w.category===c.id).length} wallpapers</div>
       </div>
       <div class="cat-acts">
-        <button class="btn btn-ghost btn-sm" onclick="openCatModal('${c.id}')">✏️ Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCat('${c.id}')">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick='openCatModal(${escapeHtml(JSON.stringify(c.id))})'>✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick='deleteCat(${escapeHtml(JSON.stringify(c.id))})'>🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -1074,7 +1084,15 @@ async function saveCatModal(){
   if(!name){toast('⚠️ Please enter a name');return;}
 
   const editId=document.getElementById('cm-edit-id').value||null;
-  const catId=editId||name.toLowerCase().replace(/\s+/g,'-');
+  const catId=editId||name.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || `category-${Date.now()}`;
+
+  // Prevent a rapid double-click from firing two concurrent saves
+  // (which could create a duplicate category before the first insert
+  // even finishes) — same protection saveWpModal already has.
+  const saveBtn = document.querySelector('#cat-modal .btn-gold');
+  const originalLabel = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Saving...';
 
   try{
     let file = null;
@@ -1095,7 +1113,10 @@ async function saveCatModal(){
     toast(editId?'✅ Category updated!':'✅ Category added!');
   }catch(err){
     console.error(err);
-    toast('❌ Something went wrong — check console');
+    toast('❌ ' + (err.message || 'Something went wrong — check console'));
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalLabel;
   }
 }
 
@@ -1130,13 +1151,16 @@ function loadAboutPreview(){
     p.src=adminCFG.aboutImage;p.classList.add('show');
   }
 }
-async function saveAbout(){
+async function saveAbout(btn){
   adminCFG.aboutH2   =document.getElementById('a-h2').value;
   adminCFG.aboutP1   =document.getElementById('a-p1').value;
   adminCFG.aboutP2   =document.getElementById('a-p2').value;
   adminCFG.aboutStat1=document.getElementById('a-stat1').value;
   adminCFG.aboutStat2=document.getElementById('a-stat2').value;
   adminCFG.aboutStat3=document.getElementById('a-stat3').value;
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
 
   try{
     if(aboutFilePending){
@@ -1149,7 +1173,10 @@ async function saveAbout(){
     toast('✅ About page saved!');
   }catch(err){
     console.error(err);
-    toast('❌ Failed to save — check console');
+    toast('❌ ' + (err.message || 'Failed to save — check console'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -1172,11 +1199,14 @@ function updateSocialPreviews(){
 ['s-ig','s-tw','s-pt','s-gmail'].forEach(id=>{
   document.getElementById(id)?.addEventListener('input',updateSocialPreviews);
 });
-async function saveSocial(){
+async function saveSocial(btn){
   adminCFG.instagram=document.getElementById('s-ig').value;
   adminCFG.twitter  =document.getElementById('s-tw').value;
   adminCFG.pinterest=document.getElementById('s-pt').value;
   adminCFG.gmail    =document.getElementById('s-gmail').value;
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
 
   try{
     await sbSaveSettings(adminCFG);
@@ -1184,7 +1214,10 @@ async function saveSocial(){
     toast('✅ Social links saved!');
   }catch(err){
     console.error(err);
-    toast('❌ Failed to save — check console');
+    toast('❌ ' + (err.message || 'Failed to save — check console'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -1194,17 +1227,23 @@ function loadSettingsTab(){
   document.getElementById('cfg-tag').value  =adminCFG.tagline  ||'Premium Wallpapers for Every Screen';
   document.getElementById('cfg-copy').value =adminCFG.copyright||'© 2026 AetherPixels. All rights reserved.';
 }
-async function saveSettings(){
+async function saveSettings(btn){
   adminCFG.siteName  =document.getElementById('cfg-name').value;
   adminCFG.tagline   =document.getElementById('cfg-tag').value;
   adminCFG.copyright =document.getElementById('cfg-copy').value;
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
 
   try{
     await sbSaveSettings(adminCFG);
     toast('✅ Settings saved!');
   }catch(err){
     console.error(err);
-    toast('❌ Failed to save — check console');
+    toast('❌ ' + (err.message || 'Failed to save — check console'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -1287,7 +1326,8 @@ function toast(msg){
 }
 
 // ─── UTILS ────────────────────────────────────────────────
-function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+// capitalize() and escapeHtml() are provided by script.js (loaded above)
+// — no need to duplicate them here.
 
 // ─── BOOT ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {

@@ -47,14 +47,17 @@ create table if not exists analytics_events (
 );
 
 -- ═══════════════════════════════════════════════════════════
--- Row Level Security
--- Public can READ everything. Only requests bearing the admin
--- password check (done in app code) are allowed to WRITE —
--- for simplicity here we allow anon WRITE too, since the anon
--- key is already semi-private and the admin panel is the only
--- place write calls originate from. For stronger security later,
--- swap this for Supabase Auth + policies scoped to a logged-in
--- admin user.
+-- ⚠️ SUPERSEDED — DO NOT UNCOMMENT
+-- This file originally created permissive "anon write ... using(true)"
+-- policies here (public write access controlled only by a client-side
+-- password check). That approach has since been replaced entirely.
+--
+-- For a fresh setup, after running this file, ALSO run, in order:
+--   1. sql/security_hardening.sql   (real RLS + Supabase Auth policies)
+--   2. sql/final_audit_hardening.sql (bucket limits + extra hardening)
+--
+-- Do not add "for all using(true)" policies to these tables — that
+-- was the core vulnerability the later scripts fix.
 -- ═══════════════════════════════════════════════════════════
 
 alter table categories        enable row level security;
@@ -66,10 +69,7 @@ create policy "public read categories"  on categories  for select using (true);
 create policy "public read wallpapers"  on wallpapers  for select using (true);
 create policy "public read settings"    on site_settings for select using (true);
 
-create policy "anon write categories"   on categories  for all using (true) with check (true);
-create policy "anon write wallpapers"   on wallpapers  for all using (true) with check (true);
-create policy "anon write settings"     on site_settings for all using (true) with check (true);
-create policy "anon write analytics"    on analytics_events for all using (true) with check (true);
+-- (Write policies intentionally omitted here — see security_hardening.sql)
 
 -- ═══════════════════════════════════════════════════════════
 -- Seed data (matches your current placeholder wallpapers)

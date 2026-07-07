@@ -1,46 +1,24 @@
--- ═══════════════════════════════════════════════════════════
--- AetherPixels — Storage Upload Permissions
--- Run this in Supabase SQL Editor to allow the admin panel
--- to upload/update/delete files in your storage buckets.
--- (Making a bucket "Public" only allows public READ access —
---  it does NOT allow anonymous uploads. These policies do.)
--- ═══════════════════════════════════════════════════════════
-
--- Allow anyone (anon key) to READ files in both buckets
-create policy "public read wallpapers bucket"
-on storage.objects for select
-using ( bucket_id = 'wallpapers' );
-
-create policy "public read site-assets bucket"
-on storage.objects for select
-using ( bucket_id = 'site-assets' );
-
--- Allow anyone (anon key) to UPLOAD files into both buckets
--- (Since your admin panel is password-protected in the UI,
---  this is fine for now. For stronger security later, restrict
---  this to Supabase Auth admin users instead.)
-create policy "public upload wallpapers bucket"
-on storage.objects for insert
-with check ( bucket_id = 'wallpapers' );
-
-create policy "public upload site-assets bucket"
-on storage.objects for insert
-with check ( bucket_id = 'site-assets' );
-
--- Allow updates (needed when admin panel replaces/overwrites an image)
-create policy "public update wallpapers bucket"
-on storage.objects for update
-using ( bucket_id = 'wallpapers' );
-
-create policy "public update site-assets bucket"
-on storage.objects for update
-using ( bucket_id = 'site-assets' );
-
--- Allow deletes (needed when admin panel deletes a wallpaper/category)
-create policy "public delete wallpapers bucket"
-on storage.objects for delete
-using ( bucket_id = 'wallpapers' );
-
-create policy "public delete site-assets bucket"
-on storage.objects for delete
-using ( bucket_id = 'site-assets' );
+-- ═══════════════════════════════════════════════════════════════
+-- ⚠️ SUPERSEDED — DO NOT RUN THIS FILE
+-- ═══════════════════════════════════════════════════════════════
+--
+-- This file originally granted public (anon key) upload/update/delete
+-- access to both storage buckets. That has been replaced entirely by
+-- admin-only storage policies in sql/security_hardening.sql.
+--
+-- IMPORTANT: because Postgres RLS policies are combined with OR logic,
+-- if you were to run the original version of this file AFTER running
+-- security_hardening.sql, the old permissive policies would coexist
+-- alongside the new admin-only ones — and the permissive ones would
+-- silently win, giving everyone on the internet upload/delete access
+-- to your storage again, even though the "secure" policies still show
+-- up in your dashboard looking correct.
+--
+-- This file is intentionally left with no executable SQL below this
+-- point. All storage policies now live in:
+--   • sql/security_hardening.sql   (creates admin-only policies)
+--   • sql/final_audit_hardening.sql (adds bucket-level size/type limits)
+--
+-- If you ever need to inspect or modify storage policies, edit those
+-- files instead of this one.
+-- ═══════════════════════════════════════════════════════════════

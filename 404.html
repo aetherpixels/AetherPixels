@@ -5,46 +5,14 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latest Wallpapers — AetherPixels</title>
-<meta name="description" content="The newest 4K wallpapers added to AetherPixels, updated weekly. Free downloads for mobile and desktop.">
-<link rel="canonical" href="https://aetherpixels.github.io/AetherPixels/latest.html">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="AetherPixels">
-<meta property="og:title" content="Latest Wallpapers — AetherPixels">
-<meta property="og:description" content="The newest 4K wallpapers added to AetherPixels, updated weekly.">
-<meta property="og:url" content="https://aetherpixels.github.io/AetherPixels/latest.html">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Latest Wallpapers — AetherPixels">
-<meta name="twitter:description" content="The newest 4K wallpapers added to AetherPixels, updated weekly.">
-<meta name="twitter:image" content="https://aetherpixels.github.io/AetherPixels/logo.png">
-<link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
+<title>Page Not Found — AetherPixels</title>
+<meta name="description" content="The page you're looking for doesn't exist. Browse AetherPixels' collection of premium 4K wallpapers instead.">
+<meta name="robots" content="noindex">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a0c">
 <link rel="stylesheet" href="style.css">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "AetherPixels",
-  "url": "https://aetherpixels.github.io/AetherPixels/index.html",
-  "logo": "https://aetherpixels.github.io/AetherPixels/logo.png",
-  "description": "AetherPixels is a curated library of premium, AI-crafted 4K wallpapers for mobile and desktop.",
-  "sameAs": [
-    "https://www.instagram.com/aether_pixels_"
-  ]
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "AetherPixels",
-  "url": "https://aetherpixels.github.io/AetherPixels/latest.html",
-  "description": "The newest 4K wallpapers added to AetherPixels."
-}
-</script>
 </head>
 <body>
 
@@ -59,7 +27,7 @@
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="category.html">Categories</a></li>
-      <li><a href="latest.html" class="active" aria-current="page">Latest</a></li>
+      <li><a href="latest.html">Latest</a></li>
       <li><a href="about.html">About</a></li>
     </ul>
     <div class="nav-right">
@@ -71,18 +39,19 @@
 </nav>
 <div class="nav-backdrop"></div>
 
-<header class="page-header">
-  <div class="wrap">
-    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a> / Latest</nav>
-    <h1>Latest Wallpapers</h1>
-    <p>Freshly added, sorted newest first. New drops every week.</p>
-  </div>
-</header>
-
 <main id="main-content">
 <section class="section">
-  <div class="wrap">
-    <div class="wp-grid" id="wp-grid" role="list" aria-label="Latest wallpapers"><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div><div class="skeleton skeleton-wp" aria-hidden="true"></div></div>
+  <div class="wrap" style="text-align:center;padding:80px 20px;">
+    <div style="font-size:72px;margin-bottom:8px;" aria-hidden="true">🖼️</div>
+    <div class="eyebrow" style="justify-content:center;display:flex;">404 ERROR</div>
+    <h1 style="font-size:clamp(28px,5vw,42px);font-weight:800;margin-bottom:14px;">This page took a wrong turn.</h1>
+    <p style="color:var(--muted);font-size:16px;max-width:480px;margin:0 auto 32px;">
+      The page you're looking for doesn't exist, may have been moved, or the link might be broken.
+    </p>
+    <div class="hero-actions" style="justify-content:center;">
+      <a href="index.html" class="btn btn-gold">← Back to Home</a>
+      <a href="category.html?cat=all" class="btn btn-ghost">Browse Wallpapers</a>
+    </div>
   </div>
 </section>
 </main>
@@ -135,16 +104,6 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="supabase-client.js"></script>
 <script src="script.js"></script>
-<script>
-  sbApplyToPage()
-    .catch(e=>console.error(e))
-    .finally(()=>{
-      const errs = window.AP_FETCH_ERRORS || {};
-      errs.wallpapers ? renderLoadError("#wp-grid") : renderWallpaperGrid("#wp-grid", [...(window.WALLPAPERS || [])].reverse());
-    });
-</script>
 </body>
 </html>

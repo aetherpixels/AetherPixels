@@ -27,12 +27,23 @@ function sbConfigured(){
 // error in ONE of these (wallpapers/categories/settings) never
 // silently takes the others down too — every function always
 // resolves to a safe empty value instead of throwing.
+//
+// window.AP_FETCH_ERRORS tracks whether a fetch genuinely FAILED
+// (network error, Supabase down, RLS rejection, etc.) as opposed to
+// succeeding with zero rows — these need different UI treatment:
+// a real failure should offer a retry, an empty table should not.
+window.AP_FETCH_ERRORS = { wallpapers: false, categories: false };
+
 async function sbFetchWallpapers(){
   try{
     const sb = sbClient();
-    if(!sb) return [];
+    if(!sb){ window.AP_FETCH_ERRORS.wallpapers = true; return []; }
     const { data, error } = await sb.from("wallpapers").select("*").order("created_at", { ascending: false });
-    if(error){ console.error("sbFetchWallpapers error:", error.message || error); return []; }
+    if(error){
+      console.error("sbFetchWallpapers error:", error.message || error);
+      window.AP_FETCH_ERRORS.wallpapers = true;
+      return [];
+    }
     if(!data) return [];
     return data.map(w => ({
       id: w.id,
@@ -50,6 +61,7 @@ async function sbFetchWallpapers(){
     }));
   }catch(err){
     console.error("sbFetchWallpapers threw an exception (likely network/connectivity issue):", err);
+    window.AP_FETCH_ERRORS.wallpapers = true;
     return [];
   }
 }
@@ -57,9 +69,13 @@ async function sbFetchWallpapers(){
 async function sbFetchCategories(){
   try{
     const sb = sbClient();
-    if(!sb) return [];
+    if(!sb){ window.AP_FETCH_ERRORS.categories = true; return []; }
     const { data, error } = await sb.from("categories").select("*").order("sort_order", { ascending: true });
-    if(error){ console.error("sbFetchCategories error:", error.message || error); return []; }
+    if(error){
+      console.error("sbFetchCategories error:", error.message || error);
+      window.AP_FETCH_ERRORS.categories = true;
+      return [];
+    }
     if(!data) return [];
     return data.map(c => ({
       id: c.id,
@@ -70,6 +86,7 @@ async function sbFetchCategories(){
     }));
   }catch(err){
     console.error("sbFetchCategories threw an exception (likely network/connectivity issue):", err);
+    window.AP_FETCH_ERRORS.categories = true;
     return [];
   }
 }
@@ -223,6 +240,8 @@ async function sbTrackDownload(wallpaperId, mode){
 // puts them on window.WALLPAPERS / window.CATEGORIES for the
 // existing render functions in script.js to use.
 async function sbApplyToPage(){
+  window.AP_FETCH_ERRORS = { wallpapers: false, categories: false };
+
   if(!sbConfigured()){
     console.error("Supabase is not configured — edit supabase-client.js with your Project URL and Publishable key.");
     window.WALLPAPERS = [];
@@ -248,8 +267,6 @@ async function sbApplyToPage(){
     if(wpResult.status === "rejected")  console.error("Wallpapers failed to load:", wpResult.reason);
     if(catResult.status === "rejected") console.error("Categories failed to load:", catResult.reason);
     if(settingsResult.status === "rejected") console.error("Settings failed to load:", settingsResult.reason);
-
-    console.log(`AetherPixels: loaded ${window.WALLPAPERS.length} wallpaper(s), ${window.CATEGORIES.length} categor(ies) from Supabase.`);
 
     const settings = window.AP_SETTINGS;
     if(settings.heroImage){

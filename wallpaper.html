@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title-tag">Free 4K Wallpaper Download — AetherPixels</title>
 <meta id="meta-description" name="description" content="Download this free, high quality 4K wallpaper for mobile and desktop from AetherPixels' curated collection.">
@@ -18,6 +20,9 @@
 <meta id="twitter-image-tag" name="twitter:image" content="https://aetherpixels.github.io/AetherPixels/logo.png">
 <link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
 <link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0c">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
 {
@@ -87,6 +92,15 @@
     <div class="wp-grid" id="related-grid" role="list" aria-label="Related wallpapers" style="margin-top:24px;"></div>
   </div>
 </section>
+
+<section class="section section-tight" id="recently-viewed-section" style="border-top:1px solid rgba(255,255,255,.06);display:none;" aria-labelledby="recently-viewed-heading">
+  <div class="wrap">
+    <div class="section-head-row">
+      <div class="section-tag" id="recently-viewed-heading" style="margin-bottom:0;">🕒 RECENTLY VIEWED</div>
+    </div>
+    <div class="wp-grid" id="recently-viewed-grid" role="list" aria-label="Recently viewed wallpapers" style="margin-top:24px;"></div>
+  </div>
+</section>
 </main>
 
 <footer class="footer" role="contentinfo">
@@ -143,11 +157,84 @@
 <script>
   function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
 
+  function showNotFound(message){
+    document.querySelector("#detail-root").innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">🖼️</div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:10px;">${message}</h1>
+        <p style="color:var(--muted);margin-bottom:24px;">The wallpaper you're looking for might have been removed or the link is incorrect.</p>
+        <a href="category.html?cat=all" class="btn btn-gold">Browse All Wallpapers →</a>
+      </div>
+    `;
+    document.getElementById("wp-h1").textContent = message;
+    document.querySelector("#detail-info-rest").innerHTML = "";
+  }
+
+  // ---------- Recently Viewed (client-side, localStorage only) ----------
+  // No backend/schema changes needed — just a small history of wallpaper
+  // IDs kept in the visitor's own browser, capped at 8 most recent.
+  const RECENT_KEY = "ap_recently_viewed";
+  const RECENT_MAX = 8;
+
+  function recordRecentlyViewed(id){
+    try{
+      let history = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      history = history.filter(x => x !== id); // move to front if already present
+      history.unshift(id);
+      history = history.slice(0, RECENT_MAX);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(history));
+    }catch(err){
+      // localStorage can fail in private browsing on some browsers —
+      // recently-viewed is a nice-to-have, never worth breaking the page over.
+      console.error("Couldn't save recently-viewed history:", err);
+    }
+  }
+
+  function renderRecentlyViewed(wps, currentId){
+    let history = [];
+    try{
+      history = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    }catch(err){
+      history = [];
+    }
+
+    const section = document.getElementById("recently-viewed-section");
+    const recentWallpapers = history
+      .filter(id => id !== currentId)
+      .map(id => wps.find(w => w.id === id))
+      .filter(Boolean)
+      .slice(0, 4);
+
+    if(recentWallpapers.length === 0){
+      section.style.display = "none";
+      return;
+    }
+
+    section.style.display = "";
+    renderWallpaperGrid("#recently-viewed-grid", recentWallpapers);
+  }
+
   function loadDetail(){
     const wps = window.WALLPAPERS || [];
-    const id = parseInt(getParam("id"), 10);
-    const w = wps.find(x => x.id === id) || wps[0];
-    if(!w) return;
+    const rawId = getParam("id");
+    const id = parseInt(rawId, 10);
+
+    if(wps.length === 0){
+      showNotFound("No wallpapers available yet");
+      return;
+    }
+
+    // If an id was specified in the URL but doesn't match anything, that's
+    // a genuinely broken/stale link — show a clear message instead of
+    // silently swapping in an unrelated wallpaper, which would be
+    // confusing and wrong for anyone following a shared/bookmarked link.
+    let w;
+    if(rawId){
+      w = wps.find(x => x.id === id);
+      if(!w){ showNotFound("Wallpaper not found"); return; }
+    } else {
+      w = wps[0]; // no id given at all (e.g. someone typed the bare URL) — show the newest
+    }
 
     const pageUrl = `https://aetherpixels.github.io/AetherPixels/wallpaper.html?id=${w.id}`;
     const imgUrl  = w._resolvedImg || w.img || "";
@@ -201,25 +288,25 @@
     document.head.appendChild(breadcrumbLd);
 
     document.querySelector("#breadcrumb").innerHTML =
-      `<a href="index.html">Home</a> / <a href="category.html?cat=${w.category}">${capitalize(w.category)}</a> / ${w.title}`;
+      `<a href="index.html">Home</a> / <a href="category.html?cat=${encodeURIComponent(w.category)}">${escapeHtml(capitalize(w.category))}</a> / ${escapeHtml(w.title)}`;
 
     // Update the single static H1 by text only — never replaced/duplicated via innerHTML
     document.getElementById("wp-h1").textContent = w.title;
 
     document.querySelector("#detail-preview").innerHTML = `
-      <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${w.badge}</span>
-      <img src="${imgUrl}" alt="${w.title} — ${capitalize(w.category)} wallpaper" loading="eager" decoding="async">
+      <span class="wp-badge" style="position:absolute;top:14px;left:14px;z-index:2;">${escapeHtml(w.badge)}</span>
+      <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(w.title)} — ${escapeHtml(capitalize(w.category))} wallpaper" loading="eager" decoding="async">
     `;
 
     document.querySelector("#detail-info-rest").innerHTML = `
-      <div class="wp-meta">${capitalize(w.category)} • Best fit: ${w.device}${w.views ? ' • 👁 ' + w.views + ' views' : ''}</div>
+      <div class="wp-meta">${escapeHtml(capitalize(w.category))} • Best fit: ${escapeHtml(w.device)}${w.views ? ' • 👁 ' + Number(w.views) + ' views' : ''}</div>
       <div class="detail-tags">
         <span>📷 High Resolution</span>
         <span>🆓 Free to Use</span>
         <span>🤖 AI Crafted</span>
       </div>
-      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${w.title}">⬇ Download Wallpaper</button>
-      <a href="category.html?cat=${w.category}" class="view-all" style="margin-top:16px;display:inline-flex;">Browse more ${capitalize(w.category)} wallpapers →</a>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${escapeHtml(w.title)}">⬇ Download Wallpaper</button>
+      <a href="category.html?cat=${encodeURIComponent(w.category)}" class="view-all" style="margin-top:16px;display:inline-flex;">Browse more ${escapeHtml(capitalize(w.category))} wallpapers →</a>
     `;
 
     // Track this page view (Supabase, silently no-ops if not configured)
@@ -230,6 +317,9 @@
 
     const related = wps.filter(x => x.category === w.category && x.id !== w.id).slice(0,4);
     renderWallpaperGrid("#related-grid", related.length ? related : wps.filter(x=>x.id!==w.id).slice(0,4));
+
+    renderRecentlyViewed(wps, w.id);
+    recordRecentlyViewed(w.id);
   }
 
   sbApplyToPage()

@@ -31,18 +31,36 @@ Premium AI-crafted wallpaper site. Static frontend (HTML/CSS/JS) + Supabase back
 ## 🔧 Backend setup (Supabase) — one-time
 
 1. Create a free project at [supabase.com](https://supabase.com)
-2. Run `sql/schema.sql` in the SQL Editor
-3. Run `sql/storage_policies.sql` in the SQL Editor
-4. Create two **public** storage buckets: `wallpapers` and `site-assets`
-5. Your Project URL + Publishable key are already filled into `supabase-client.js` — if you ever create a new Supabase project, update those two lines at the top of that file.
+2. Run `sql/schema.sql` in the SQL Editor (creates tables + read-only public policies)
+3. Run `sql/security_hardening.sql` in the SQL Editor (real RLS, admin-only write policies, Supabase Auth gate, storage policies)
+4. Run `sql/final_audit_hardening.sql` in the SQL Editor (bucket-level file size/type limits, extra hardening)
+5. Create two **public** storage buckets: `wallpapers` and `site-assets`
+6. **Create your admin login:** Supabase Dashboard → Authentication → Users → Add User (email + password). Copy the generated User UID, then run in SQL Editor:
+   ```sql
+   insert into admin_users (user_id, email) values ('paste-uid-here', 'your@email.com');
+   ```
+   Until this step is done, no one — including you — can write any data. This is intentional (least-privilege by default).
+7. Your Project URL + Publishable key are already filled into `supabase-client.js` — if you ever create a new Supabase project, update those two lines at the top of that file.
+
+⚠️ Do **not** run `sql/storage_policies.sql` — it's a deliberately neutralized leftover from an earlier, less secure setup. Kept only so the file's warning comment explains why, in case anyone finds it.
 
 ## 🔑 Admin access
 
-Visit `https://<your-domain>/admin.html` and log in with your admin password (set inside `admin.html`, search for `const PW =`). This panel is where you manage all wallpapers, categories, hero text, and social links — changes save to Supabase and are visible to every visitor immediately.
+Visit `https://<your-domain>/admin.html` and sign in with the email + password you created in Supabase Auth (not a hardcoded panel password anymore — see Security section below). This panel is where you manage all wallpapers, categories, hero text, and social links — changes save to Supabase and are visible to every visitor immediately.
+
+## 🔒 Security
+
+- **Row Level Security** is enabled on every table. The public (anon) key can only ever *read* wallpapers/categories/site_settings — never write.
+- **Writes require real authentication.** Every insert/update/delete is gated by an `is_admin()` check tied to Supabase Auth, not a client-side password.
+- **View/download counters** use one narrow, safe database function (`increment_wallpaper_stat`) instead of open table access — visitors can increment a counter and nothing else.
+- **Storage buckets** are public-read, admin-only write, with server-side file size (20MB) and MIME-type (JPEG/PNG/WebP/GIF) limits enforced at the bucket level — not just in the browser.
+- **A Content-Security-Policy** and **Referrer-Policy** are set via `<meta>` tags on every page (see `_headers` for the full policy — GitHub Pages can't set real HTTP headers, so this is the closest equivalent available).
+- User-generated text (wallpaper titles, category names) is HTML-escaped before being inserted into the page, preventing stored-XSS.
 
 ## ⚠️ Before going live, double check
 
 - [ ] `supabase-client.js` has your real Supabase URL + key (not placeholders)
 - [ ] Both storage buckets exist and are set to Public
+- [ ] All three SQL files have been run, in order: `schema.sql` → `security_hardening.sql` → `final_audit_hardening.sql`
+- [ ] Your admin user exists in Supabase Auth AND has a matching row in `admin_users`
 - [ ] `sitemap.xml` and `robots.txt` reference your actual domain
-- [ ] Admin password in `admin.html` has been changed to something only you know

@@ -1,0 +1,19 @@
+{
+  "name": "AetherPixels - Premium Wallpapers",
+  "short_name": "AetherPixels",
+  "description": "Premium AI-crafted 4K wallpapers for mobile and desktop.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#e3a440",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
