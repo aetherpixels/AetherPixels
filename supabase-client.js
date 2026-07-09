@@ -57,7 +57,11 @@ async function sbFetchWallpapers(){
       width: w.width,
       height: w.height,
       views: w.views || 0,
-      downloads: w.downloads || 0
+      downloads: w.downloads || 0,
+      tags: w.tags || [],
+      status: w.status || "published",
+      publishAt: w.publish_at,
+      createdAt: w.created_at
     }));
   }catch(err){
     console.error("sbFetchWallpapers threw an exception (likely network/connectivity issue):", err);
@@ -124,7 +128,7 @@ async function sbDeleteFile(bucket, path){
 
 // ─── WALLPAPERS: WRITE ────────────────────────────────────────
 // `files` = { full: Blob, thumb: Blob } already compressed/converted to WebP
-async function sbAddWallpaper({ title, category, device, badge, files, width, height }){
+async function sbAddWallpaper({ title, category, device, badge, files, width, height, tags, status, publishAt }){
   const sb = sbClient();
   const stamp = Date.now();
   const fullPath  = `full/${stamp}.webp`;
@@ -138,7 +142,10 @@ async function sbAddWallpaper({ title, category, device, badge, files, width, he
   const { data, error } = await sb.from("wallpapers").insert({
     title, category, device, badge,
     image_url: fullUrl, thumb_url: thumbUrl,
-    width, height
+    width, height,
+    tags: tags || [],
+    status: status || "published",
+    publish_at: publishAt || null
   }).select().single();
 
   if(error){ console.error("sbAddWallpaper:", error); throw error; }

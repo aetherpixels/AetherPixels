@@ -298,6 +298,16 @@ img{display:block;max-width:100%;}
           <div id="dash-recent"></div>
         </div>
       </div>
+      <div class="g2">
+        <div class="acard">
+          <h3>🏆 Most Downloaded</h3>
+          <div id="dash-most-downloaded"></div>
+        </div>
+        <div class="acard">
+          <h3>🔥 Trending This Week</h3>
+          <div id="dash-trending"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ─── HERO ─── -->
@@ -478,6 +488,24 @@ img{display:block;max-width:100%;}
         <option value="FHD">FHD</option>
       </select>
     </div>
+    <div class="fg">
+      <label>TAGS (comma separated)</label>
+      <input id="wm-tags" placeholder="BMW, 4K, Dark, Night" maxlength="300">
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>PUBLISHING</label>
+        <select id="wm-status" onchange="onWmStatusChange()">
+          <option value="published">Published (visible now)</option>
+          <option value="draft">Draft (hidden)</option>
+          <option value="scheduled">Scheduled</option>
+        </select>
+      </div>
+      <div class="fg" id="wm-publish-at-field" style="display:none;">
+        <label>PUBLISH AT</label>
+        <input id="wm-publish-at" type="datetime-local">
+      </div>
+    </div>
     <input type="hidden" id="wm-edit-id" value="">
     <div class="btn-row">
       <button class="btn btn-gold" onclick="saveWpModal()">💾 Save Wallpaper</button>
@@ -571,6 +599,7 @@ img{display:block;max-width:100%;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<script src="user-client.js"></script>
 <script src="image-utils.js"></script>
 <script src="script.js"></script>
 <script>
@@ -758,6 +787,39 @@ function loadDashboard(){
         <div style="font-size:11px;color:var(--muted);">${escapeHtml(w.category)} · 👁 ${Number(w.views)||0} · ⬇ ${Number(w.downloads)||0}</div>
       </div>
     </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">No wallpapers yet.</p>';
+
+  const mostDownloaded = [...adminWP].sort((a,b)=>(b.downloads||0)-(a.downloads||0)).slice(0,4);
+  const mdEl = document.getElementById('dash-most-downloaded');
+  mdEl.innerHTML = mostDownloaded.filter(w=>(w.downloads||0)>0).map(w=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <img src="${escapeHtml(w._resolvedImg||w.img||'')}" alt="${escapeHtml(w.title)}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+      <div style="flex:1;overflow:hidden;">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(w.title)}</div>
+        <div style="font-size:11px;color:var(--gold);">⬇ ${Number(w.downloads)||0} downloads</div>
+      </div>
+    </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">No downloads recorded yet.</p>';
+
+  loadTrendingWidget();
+}
+
+async function loadTrendingWidget(){
+  const trEl = document.getElementById('dash-trending');
+  if(!sbConfigured()){ trEl.innerHTML = '<p style="color:var(--muted);font-size:13px;">Unavailable.</p>'; return; }
+  try{
+    window.WALLPAPERS = adminWP; // fetchTrending reads from window.WALLPAPERS
+    const trending = await fetchTrending('week', 4);
+    trEl.innerHTML = trending.map(w=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <img src="${escapeHtml(w._resolvedImg||w.img||'')}" alt="${escapeHtml(w.title)}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+        <div style="flex:1;overflow:hidden;">
+          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(w.title)}</div>
+          <div style="font-size:11px;color:var(--muted);">👁 ${Number(w.views)||0} · ⬇ ${Number(w.downloads)||0} this week</div>
+        </div>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">Not enough activity yet this week.</p>';
+  }catch(err){
+    console.error('loadTrendingWidget:', err);
+    trEl.innerHTML = '<p style="color:var(--muted);font-size:13px;">Couldn\'t load trending data.</p>';
+  }
 }
 
 // ─── HERO ────────────────────────────────────────────────
@@ -830,10 +892,13 @@ function filterWallpapers(){
 function renderWpGrid(list){
   const el = document.getElementById('wp-admin-grid');
   if(!list.length){el.innerHTML='<p style="color:var(--muted);grid-column:1/-1;padding:30px 0;text-align:center;">No wallpapers found.</p>';return;}
-  el.innerHTML = list.map(w=>`
+  el.innerHTML = list.map(w=>{
+    const statusLabel = w.status === 'draft' ? '📝 Draft' : w.status === 'scheduled' ? '⏰ Scheduled' : '';
+    return `
     <div class="wac">
       <div class="wac-thumb">
         <span class="wac-badge">${escapeHtml(w.badge||'4K')}</span>
+        ${statusLabel ? `<span class="wac-badge" style="left:auto;right:7px;background:rgba(227,164,64,.85);color:#1a1305;">${statusLabel}</span>` : ''}
         <img src="${escapeHtml(w._resolvedImg||w.img||'')}" alt="${escapeHtml(w.title)}" loading="lazy"
           onerror="this.style.background='#1a1a22'">
       </div>
@@ -845,7 +910,13 @@ function renderWpGrid(list){
           <button class="btn btn-danger btn-sm" onclick="deleteWp(${w.id})">🗑️</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+function onWmStatusChange(){
+  const status = document.getElementById('wm-status').value;
+  document.getElementById('wm-publish-at-field').style.display = status === 'scheduled' ? '' : 'none';
 }
 
 function openWpModal(id){
@@ -865,12 +936,19 @@ function openWpModal(id){
     document.getElementById('wm-cat').value=w.category;
     document.getElementById('wm-dev').value=w.device;
     document.getElementById('wm-badge').value=w.badge||'4K';
+    document.getElementById('wm-tags').value=(w.tags||[]).join(', ');
+    document.getElementById('wm-status').value=w.status||'published';
+    document.getElementById('wm-publish-at').value = w.publishAt ? w.publishAt.slice(0,16) : '';
     if(w._resolvedImg){prev.src=w._resolvedImg;prev.classList.add('show');}
   } else {
     document.getElementById('wm-title').textContent='Add Wallpaper';
     document.getElementById('wm-edit-id').value='';
     document.getElementById('wm-name').value='';
+    document.getElementById('wm-tags').value='';
+    document.getElementById('wm-status').value='published';
+    document.getElementById('wm-publish-at').value='';
   }
+  onWmStatusChange();
   showModal('wp-modal');
 }
 
@@ -882,6 +960,15 @@ async function saveWpModal(){
   const category=document.getElementById('wm-cat').value;
   const device  =document.getElementById('wm-dev').value;
   const badge   =document.getElementById('wm-badge').value;
+  const tags    =document.getElementById('wm-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const status  =document.getElementById('wm-status').value;
+  const publishAtRaw = document.getElementById('wm-publish-at').value;
+
+  if(status === 'scheduled' && !publishAtRaw){
+    toast('⚠️ Please set a publish date/time for scheduled wallpapers');
+    return;
+  }
+  const publishAt = publishAtRaw ? new Date(publishAtRaw).toISOString() : null;
 
   const saveBtn = document.querySelector('#wp-modal .btn-gold');
   const originalLabel = saveBtn.textContent;
@@ -897,10 +984,10 @@ async function saveWpModal(){
       dims = { width: processed.width, height: processed.height };
     }
     if(editId){
-      await sbUpdateWallpaper(editId, { title, category, device, badge, ...dims }, files);
+      await sbUpdateWallpaper(editId, { title, category, device, badge, tags, status, publish_at: publishAt, ...dims }, files);
     } else {
       if(!files){ toast('⚠️ Please upload an image'); saveBtn.textContent=originalLabel; saveBtn.disabled=false; return; }
-      await sbAddWallpaper({ title, category, device, badge, files, ...dims });
+      await sbAddWallpaper({ title, category, device, badge, files, tags, status, publishAt, ...dims });
     }
     adminWP = await sbFetchWallpapers();
 

@@ -417,6 +417,29 @@ textarea:focus-visible,
 .dl-option-icon{font-size:22px;}
 .dl-option-dim{font-size:11px;font-weight:500;opacity:.75;}
 
+/* ---------- Collection picker (reuses .dl-modal chrome) ---------- */
+.col-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-bottom:16px;text-align:left;}
+.col-row{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.04);border:1px solid var(--card-border);
+  border-radius:10px;padding:12px 14px;cursor:pointer;
+  transition:border-color .15s ease,background .15s ease;
+}
+.col-row:hover{border-color:rgba(227,164,64,.4);}
+.col-row.checked{border-color:var(--gold);background:rgba(227,164,64,.08);}
+.col-row input[type=checkbox]{
+  width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;
+}
+.col-row-name{flex:1;font-size:14px;font-weight:600;}
+.col-row-count{font-size:12px;color:var(--muted);}
+.col-new-row{display:flex;gap:8px;}
+.col-new-row input{
+  flex:1;padding:11px 14px;background:var(--bg);border:1px solid var(--card-border);
+  border-radius:9px;color:#fff;font-size:13.5px;
+}
+.col-new-row input:focus{outline:none;border-color:var(--gold);}
+.col-empty{color:var(--muted);font-size:13.5px;text-align:center;padding:16px 0;}
+
 /* ---------- Wallpaper detail page ---------- */
 .detail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:start;}
 .detail-preview{

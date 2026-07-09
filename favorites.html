@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Favorites — AetherPixels</title>
+<meta name="description" content="Your saved favorite wallpapers on AetherPixels.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels logo">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Open search">🔍</button>
+      <a href="account.html" class="btn-signin">My Account</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<header class="page-header">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a> / Favorites</nav>
+    <h1>My Favorites</h1>
+    <p>Wallpapers you've saved for later.</p>
+  </div>
+</header>
+
+<main id="main-content">
+<section class="section">
+  <div class="wrap">
+    <div id="favorites-signed-out" style="display:none;text-align:center;padding:40px 20px;">
+      <p style="color:var(--muted);margin-bottom:20px;">Sign in to view and manage your saved favorites.</p>
+      <a href="account.html" class="btn btn-gold">Sign In</a>
+    </div>
+    <div class="wp-grid" id="favorites-grid" role="list" aria-label="Favorite wallpapers"></div>
+  </div>
+</section>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="wrap">
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="user-client.js"></script>
+<script src="script.js"></script>
+<script>
+  async function loadFavoritesPage(){
+    await sbApplyToPage();
+    const user = await userGetSession();
+
+    if(!user){
+      document.getElementById('favorites-signed-out').style.display = 'block';
+      document.getElementById('favorites-grid').style.display = 'none';
+      return;
+    }
+
+    const favIds = await favList();
+    const wps = window.WALLPAPERS || [];
+    const favWallpapers = favIds.map(id => wps.find(w => w.id === id)).filter(Boolean);
+    renderWallpaperGrid('#favorites-grid', favWallpapers);
+
+    if(favWallpapers.length === 0){
+      document.getElementById('favorites-grid').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">' +
+        '<p style="color:var(--muted);margin-bottom:20px;">No favorites yet — tap the heart on any wallpaper to save it here.</p>' +
+        '<a href="category.html?cat=all" class="btn btn-gold">Browse Wallpapers</a></div>';
+    }
+  }
+
+  loadFavoritesPage().catch(e => console.error(e));
+</script>
+</body>
+</html>

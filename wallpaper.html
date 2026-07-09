@@ -52,11 +52,12 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="category.html">Categories</a></li>
       <li><a href="latest.html">Latest</a></li>
+      <li><a href="trending.html">Trending</a></li>
       <li><a href="about.html">About</a></li>
     </ul>
     <div class="nav-right">
       <button class="icon-btn" aria-label="Open search">🔍</button>
-      <a href="#" class="btn-signin">Sign In</a>
+      <a href="account.html" class="btn-signin">Sign In</a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
     </div>
   </div>
@@ -153,6 +154,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<script src="user-client.js"></script>
 <script src="script.js"></script>
 <script>
   function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
@@ -212,6 +214,170 @@
 
     section.style.display = "";
     renderWallpaperGrid("#recently-viewed-grid", recentWallpapers);
+  }
+
+  // ---------- Add to Collection ----------
+  async function openCollectionModal(wallpaperId){
+    const user = await userGetSession();
+    if(!user){
+      showToast('Sign in to use collections');
+      setTimeout(() => window.location.href = 'account.html', 1200);
+      return;
+    }
+
+    let modal = document.querySelector(".col-modal");
+    if(modal) modal.remove();
+
+    modal = document.createElement("div");
+    modal.className = "dl-modal col-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Add to collection");
+    modal.innerHTML = `
+      <div class="dl-modal-card">
+        <button class="dl-close" aria-label="Close dialog">✕</button>
+        <h3>Add to Collection</h3>
+        <p>Choose one or more collections, or create a new one.</p>
+        <div class="col-list" id="col-list">
+          <p class="col-empty">Loading your collections…</p>
+        </div>
+        <div class="col-new-row">
+          <input type="text" id="col-new-name" placeholder="New collection name" maxlength="80">
+          <button class="btn btn-gold btn-sm" onclick="createCollectionInModal(${wallpaperId})">+ Create</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add("show"));
+
+    const close = () => { modal.classList.remove("show"); setTimeout(() => modal.remove(), 250); };
+    modal.querySelector(".dl-close").addEventListener("click", close);
+    modal.addEventListener("click", (e) => { if(e.target === modal) close(); });
+    modal.addEventListener("keydown", (e) => { if(e.key === "Escape") close(); });
+
+    await renderCollectionModalList(wallpaperId);
+    modal.querySelector("#col-new-name")?.focus();
+  }
+
+  async function renderCollectionModalList(wallpaperId){
+    const listEl = document.getElementById("col-list");
+    if(!listEl) return;
+
+    try{
+      const collections = await collectionList();
+      if(collections.length === 0){
+        listEl.innerHTML = '<p class="col-empty">You don\'t have any collections yet — create one below.</p>';
+        return;
+      }
+
+      // Figure out which collections already contain this wallpaper,
+      // so the checkboxes reflect current state (and toggling one off
+      // removes it — this is how "remove from collection" works here).
+      const membership = await Promise.all(
+        collections.map(async c => ({ id: c.id, hasItem: (await collectionGetItems(c.id)).includes(wallpaperId) }))
+      );
+      const memberSet = new Set(membership.filter(m => m.hasItem).map(m => m.id));
+
+      listEl.innerHTML = collections.map(c => `
+        <label class="col-row ${memberSet.has(c.id) ? 'checked' : ''}" data-collection-id="${c.id}">
+          <input type="checkbox" ${memberSet.has(c.id) ? 'checked' : ''}
+            onchange="toggleCollectionMembership(${c.id}, ${wallpaperId}, this)">
+          <span class="col-row-name">${escapeHtml(c.name)}</span>
+        </label>
+      `).join("");
+    }catch(err){
+      console.error("renderCollectionModalList:", err);
+      listEl.innerHTML = '<p class="col-empty">Couldn\'t load your collections. Please try again.</p>';
+    }
+  }
+
+  async function toggleCollectionMembership(collectionId, wallpaperId, checkbox){
+    const row = checkbox.closest(".col-row");
+    checkbox.disabled = true;
+    try{
+      if(checkbox.checked){
+        await collectionAddItem(collectionId, wallpaperId);
+        row.classList.add("checked");
+        showToast("Added to collection ✅");
+      }else{
+        await collectionRemoveItem(collectionId, wallpaperId);
+        row.classList.remove("checked");
+        showToast("Removed from collection");
+      }
+    }catch(err){
+      console.error("toggleCollectionMembership:", err);
+      checkbox.checked = !checkbox.checked; // revert the checkbox on failure
+      showToast("❌ " + (err.message || "Something went wrong"));
+    }finally{
+      checkbox.disabled = false;
+    }
+  }
+
+  async function createCollectionInModal(wallpaperId){
+    const input = document.getElementById("col-new-name");
+    const name = input.value.trim();
+    if(!name){ showToast("Please enter a collection name"); return; }
+
+    try{
+      const newCollection = await collectionCreate(name);
+      await collectionAddItem(newCollection.id, wallpaperId);
+      input.value = "";
+      showToast(`✅ Created "${name}" and added this wallpaper`);
+      await renderCollectionModalList(wallpaperId);
+    }catch(err){
+      console.error("createCollectionInModal:", err);
+      showToast("❌ " + (err.message || "Could not create collection"));
+    }
+  }
+
+  // ---------- Favorite button ----------
+  async function initFavoriteButton(wallpaperId){
+    const btn = document.getElementById('fav-btn');
+    if(!btn) return;
+    const user = await userGetSession();
+    if(!user){
+      btn.title = 'Sign in to save favorites';
+      return;
+    }
+    try{
+      const isFav = await favIsFavorited(wallpaperId);
+      setFavButtonState(btn, isFav);
+    }catch(err){
+      console.error('initFavoriteButton:', err);
+    }
+  }
+
+  function setFavButtonState(btn, isFav){
+    btn.textContent = isFav ? '❤️' : '🤍';
+    btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+    btn.setAttribute('aria-label', isFav ? 'Remove from favorites' : 'Save to favorites');
+  }
+
+  async function toggleFavorite(wallpaperId, btn){
+    const user = await userGetSession();
+    if(!user){
+      showToast('Sign in to save favorites');
+      setTimeout(() => window.location.href = 'account.html', 1200);
+      return;
+    }
+    const currentlyFav = btn.getAttribute('aria-pressed') === 'true';
+    btn.disabled = true;
+    try{
+      if(currentlyFav){
+        await favRemove(wallpaperId);
+        setFavButtonState(btn, false);
+        showToast('Removed from favorites');
+      }else{
+        await favAdd(wallpaperId);
+        setFavButtonState(btn, true);
+        showToast('Saved to favorites ❤️');
+      }
+    }catch(err){
+      console.error('toggleFavorite:', err);
+      showToast('❌ ' + (err.message || 'Something went wrong'));
+    }finally{
+      btn.disabled = false;
+    }
   }
 
   function loadDetail(){
@@ -304,10 +470,17 @@
         <span>📷 High Resolution</span>
         <span>🆓 Free to Use</span>
         <span>🤖 AI Crafted</span>
+        ${(w.tags||[]).slice(0,5).map(t=>`<span>#${escapeHtml(t)}</span>`).join('')}
       </div>
-      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${escapeHtml(w.title)}">⬇ Download Wallpaper</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-gold" style="flex:1;justify-content:center;" onclick="openDownloadModal(${w.id})" aria-label="Download ${escapeHtml(w.title)}">⬇ Download Wallpaper</button>
+        <button class="btn btn-ghost" id="fav-btn" style="width:52px;justify-content:center;padding:0;" onclick="toggleFavorite(${w.id}, this)" aria-label="Save to favorites" aria-pressed="false">🤍</button>
+        <button class="btn btn-ghost" style="width:52px;justify-content:center;padding:0;" onclick="openCollectionModal(${w.id})" aria-label="Add to collection">📁</button>
+      </div>
       <a href="category.html?cat=${encodeURIComponent(w.category)}" class="view-all" style="margin-top:16px;display:inline-flex;">Browse more ${escapeHtml(capitalize(w.category))} wallpapers →</a>
     `;
+
+    initFavoriteButton(w.id);
 
     // Track this page view (Supabase, silently no-ops if not configured)
     if(typeof sbConfigured === "function" && sbConfigured()){
@@ -315,7 +488,24 @@
     }
 
 
-    const related = wps.filter(x => x.category === w.category && x.id !== w.id).slice(0,4);
+    // Score every other wallpaper by relevance: same category counts a lot,
+    // each shared tag adds a bit more — this naturally surfaces the most
+    // genuinely similar wallpapers instead of just "same category, in order".
+    const currentTags = new Set((w.tags||[]).map(t => t.toLowerCase()));
+    const scored = wps
+      .filter(x => x.id !== w.id)
+      .map(x => {
+        let score = 0;
+        if(x.category === w.category) score += 10;
+        const overlap = (x.tags||[]).filter(t => currentTags.has(t.toLowerCase())).length;
+        score += overlap * 3;
+        return { wallpaper: x, score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a,b) => b.score - a.score)
+      .map(x => x.wallpaper);
+
+    const related = scored.slice(0,4);
     renderWallpaperGrid("#related-grid", related.length ? related : wps.filter(x=>x.id!==w.id).slice(0,4));
 
     renderRecentlyViewed(wps, w.id);

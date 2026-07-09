@@ -178,11 +178,11 @@ function openDownloadModal(id){
   const safeTitle = escapeHtml(w.title || "Untitled Wallpaper");
   const safeImg = escapeHtml(w._resolvedImg || w.img || "");
 
-  let modal = document.querySelector(".dl-modal");
+  let modal = document.querySelector(".download-modal");
   if(modal) modal.remove();
 
   modal = document.createElement("div");
-  modal.className = "dl-modal";
+  modal.className = "dl-modal download-modal";
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-label", `Download options for ${safeTitle}`);

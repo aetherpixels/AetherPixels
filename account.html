@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — AetherPixels</title>
+<meta name="description" content="Sign in or create an AetherPixels account to save favorites and build wallpaper collections.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
+<link rel="stylesheet" href="style.css">
+<style>
+  .acct-wrap{max-width:420px;margin:60px auto;padding:0 20px;}
+  .acct-card{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:36px 30px;}
+  .acct-tabs{display:flex;gap:6px;margin-bottom:26px;background:var(--bg);border-radius:10px;padding:4px;}
+  .acct-tab{flex:1;padding:10px;text-align:center;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  .acct-tab.active{background:var(--card);color:var(--gold);}
+  .acct-field{margin-bottom:14px;text-align:left;}
+  .acct-field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:7px;}
+  .acct-field input{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--card-border);border-radius:9px;color:#fff;font-size:14px;}
+  .acct-field input:focus{outline:none;border-color:var(--gold);}
+  .acct-panel{display:none;}
+  .acct-panel.active{display:block;}
+  .acct-msg{font-size:13px;margin-top:14px;padding:10px 14px;border-radius:9px;display:none;}
+  .acct-msg.show{display:block;}
+  .acct-msg.success{background:rgba(76,175,110,.1);color:#7ed99b;border:1px solid rgba(76,175,110,.25);}
+  .acct-msg.error{background:rgba(232,84,84,.1);color:#ff9d9d;border:1px solid rgba(232,84,84,.25);}
+  .acct-link{color:var(--gold);font-size:13px;text-align:center;display:block;margin-top:16px;cursor:pointer;}
+  .acct-user-card{text-align:center;}
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels logo">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Open search">🔍</button>
+      <a href="account.html" class="btn-signin">My Account</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<main id="main-content">
+<div class="acct-wrap">
+
+  <!-- Logged OUT state -->
+  <div id="acct-logged-out" class="acct-card">
+    <div class="acct-tabs">
+      <div class="acct-tab active" id="tab-login" onclick="switchAcctTab('login')">Sign In</div>
+      <div class="acct-tab" id="tab-register" onclick="switchAcctTab('register')">Register</div>
+    </div>
+
+    <div class="acct-panel active" id="panel-login">
+      <div class="acct-field">
+        <label>EMAIL</label>
+        <input type="email" id="login-email" autocomplete="username">
+      </div>
+      <div class="acct-field">
+        <label>PASSWORD</label>
+        <input type="password" id="login-password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="handleLogin(this)">Sign In</button>
+      <span class="acct-link" onclick="switchAcctTab('reset')">Forgot your password?</span>
+      <div class="acct-msg" id="login-msg"></div>
+    </div>
+
+    <div class="acct-panel" id="panel-register">
+      <div class="acct-field">
+        <label>EMAIL</label>
+        <input type="email" id="register-email" autocomplete="username">
+      </div>
+      <div class="acct-field">
+        <label>PASSWORD (min 6 characters)</label>
+        <input type="password" id="register-password" autocomplete="new-password" minlength="6">
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="handleRegister(this)">Create Account</button>
+      <div class="acct-msg" id="register-msg"></div>
+    </div>
+
+    <div class="acct-panel" id="panel-reset">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Enter your email and we'll send you a link to reset your password.</p>
+      <div class="acct-field">
+        <label>EMAIL</label>
+        <input type="email" id="reset-email" autocomplete="username">
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="handleReset(this)">Send Reset Link</button>
+      <span class="acct-link" onclick="switchAcctTab('login')">← Back to sign in</span>
+      <div class="acct-msg" id="reset-msg"></div>
+    </div>
+  </div>
+
+  <!-- Logged IN state -->
+  <div id="acct-logged-in" class="acct-card acct-user-card" style="display:none;">
+    <div style="font-size:40px;margin-bottom:10px;">👤</div>
+    <h1 style="font-size:19px;font-weight:800;margin-bottom:4px;">Welcome back</h1>
+    <p id="acct-email" style="color:var(--muted);font-size:13.5px;margin-bottom:24px;"></p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="favorites.html" class="btn btn-gold" style="justify-content:center;">❤️ My Favorites</a>
+      <a href="collections.html" class="btn btn-ghost" style="justify-content:center;">📁 My Collections</a>
+      <button class="btn btn-ghost" style="justify-content:center;" onclick="handleLogout()">🚪 Sign Out</button>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="wrap">
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="user-client.js"></script>
+<script src="script.js"></script>
+<script>
+  function switchAcctTab(tab){
+    document.querySelectorAll('.acct-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.acct-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('panel-'+tab)?.classList.add('active');
+    document.getElementById('tab-'+tab)?.classList.add('active');
+  }
+
+  function showAcctMsg(id, message, isError){
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.className = 'acct-msg show ' + (isError ? 'error' : 'success');
+  }
+
+  async function handleLogin(btn){
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if(!email || !password){ showAcctMsg('login-msg', 'Please fill in both fields.', true); return; }
+    btn.disabled = true; btn.textContent = 'Signing in...';
+    try{
+      await userSignIn(email, password);
+      window.location.href = 'account.html';
+    }catch(err){
+      showAcctMsg('login-msg', err.message || 'Sign in failed.', true);
+    }finally{
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+
+  async function handleRegister(btn){
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    if(!email || password.length < 6){ showAcctMsg('register-msg', 'Please enter a valid email and a password of at least 6 characters.', true); return; }
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    try{
+      await userSignUp(email, password);
+      showAcctMsg('register-msg', 'Account created! Check your email to confirm, then sign in.', false);
+    }catch(err){
+      showAcctMsg('register-msg', err.message || 'Registration failed.', true);
+    }finally{
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  async function handleReset(btn){
+    const email = document.getElementById('reset-email').value.trim();
+    if(!email){ showAcctMsg('reset-msg', 'Please enter your email.', true); return; }
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try{
+      await userResetPassword(email);
+      showAcctMsg('reset-msg', 'Reset link sent — check your email.', false);
+    }catch(err){
+      showAcctMsg('reset-msg', err.message || 'Could not send reset link.', true);
+    }finally{
+      btn.disabled = false; btn.textContent = 'Send Reset Link';
+    }
+  }
+
+  async function handleLogout(){
+    await userSignOut();
+    location.reload();
+  }
+
+  async function initAccountPage(){
+    const user = await userGetSession();
+    if(user){
+      document.getElementById('acct-logged-out').style.display = 'none';
+      document.getElementById('acct-logged-in').style.display = 'block';
+      document.getElementById('acct-email').textContent = user.email;
+    } else {
+      document.getElementById('acct-logged-out').style.display = 'block';
+      document.getElementById('acct-logged-in').style.display = 'none';
+    }
+  }
+
+  initAccountPage();
+</script>
+</body>
+</html>

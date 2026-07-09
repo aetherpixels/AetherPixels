@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /account.html
+Disallow: /favorites.html
 
 Sitemap: https://aetherpixels.github.io/AetherPixels/sitemap.xml

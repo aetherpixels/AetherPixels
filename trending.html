@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://opxcfhfbbzxsgqaztgjg.supabase.co https://images.unsplash.com; font-src 'self'; connect-src 'self' https://opxcfhfbbzxsgqaztgjg.supabase.co wss://opxcfhfbbzxsgqaztgjg.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trending Wallpapers — AetherPixels</title>
+<meta name="description" content="The most popular 4K wallpapers on AetherPixels right now, ranked by views and downloads.">
+<link rel="canonical" href="https://aetherpixels.github.io/AetherPixels/trending.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AetherPixels">
+<meta property="og:title" content="Trending Wallpapers — AetherPixels">
+<meta property="og:description" content="The most popular 4K wallpapers on AetherPixels right now.">
+<meta property="og:url" content="https://aetherpixels.github.io/AetherPixels/trending.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="preconnect" href="https://opxcfhfbbzxsgqaztgjg.supabase.co">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.png" class="brand-logo" alt="AetherPixels logo">
+      <span class="brand-name">AETHERPIXELS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="category.html">Categories</a></li>
+      <li><a href="latest.html">Latest</a></li>
+      <li><a href="trending.html" class="active" aria-current="page">Trending</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Open search">🔍</button>
+      <a href="account.html" class="btn-signin">My Account</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="nav-backdrop"></div>
+
+<header class="page-header">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a> / Trending</nav>
+    <h1>🔥 Trending Wallpapers</h1>
+    <p>The most popular wallpapers right now, based on views and downloads.</p>
+
+    <div class="filter-bar" role="tablist" aria-label="Trending timeframe">
+      <button class="chip active" id="tf-today" onclick="switchTimeframe('today')" role="tab" aria-selected="true">Trending Today</button>
+      <button class="chip" id="tf-week" onclick="switchTimeframe('week')" role="tab" aria-selected="false">Trending This Week</button>
+      <button class="chip" id="tf-month" onclick="switchTimeframe('month')" role="tab" aria-selected="false">Trending This Month</button>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+<section class="section">
+  <div class="wrap">
+    <div class="wp-grid" id="trending-grid" role="list" aria-label="Trending wallpapers"></div>
+  </div>
+</section>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="wrap">
+    <div class="footer-bottom">© 2026 AetherPixels. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="user-client.js"></script>
+<script src="script.js"></script>
+<script>
+  let currentTimeframe = 'today';
+
+  async function switchTimeframe(tf){
+    currentTimeframe = tf;
+    ['today','week','month'].forEach(t => {
+      const btn = document.getElementById('tf-'+t);
+      btn.classList.toggle('active', t === tf);
+      btn.setAttribute('aria-selected', t === tf ? 'true' : 'false');
+    });
+    await loadTrendingPage();
+  }
+
+  async function loadTrendingPage(){
+    const grid = document.getElementById('trending-grid');
+    grid.innerHTML = Array.from({length:8}).map(()=>'<div class="skeleton skeleton-wp" aria-hidden="true"></div>').join('');
+
+    try{
+      const trending = await fetchTrending(currentTimeframe, 16);
+      if(trending.length === 0){
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">' +
+          '<p style="color:var(--muted);margin-bottom:20px;">Not enough activity yet for this timeframe — check back soon, or explore the full catalog.</p>' +
+          '<a href="category.html?cat=all" class="btn btn-gold">Browse All Wallpapers</a></div>';
+        return;
+      }
+      renderWallpaperGrid('#trending-grid', trending);
+    }catch(err){
+      console.error('loadTrendingPage:', err);
+      renderLoadError('#trending-grid');
+    }
+  }
+
+  sbApplyToPage()
+    .catch(e=>console.error(e))
+    .finally(loadTrendingPage);
+</script>
+</body>
+</html>

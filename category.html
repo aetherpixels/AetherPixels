@@ -70,11 +70,12 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="category.html" class="active" aria-current="page">Categories</a></li>
       <li><a href="latest.html">Latest</a></li>
+      <li><a href="trending.html">Trending</a></li>
       <li><a href="about.html">About</a></li>
     </ul>
     <div class="nav-right">
       <button class="icon-btn" aria-label="Open search">🔍</button>
-      <a href="#" class="btn-signin">Sign In</a>
+      <a href="account.html" class="btn-signin">Sign In</a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
     </div>
   </div>
@@ -88,6 +89,21 @@
     <p id="page-sub">Browse every wallpaper, sorted by category.</p>
 
     <div class="filter-bar" id="filter-bar" role="tablist" aria-label="Filter by category"></div>
+
+    <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+      <select id="sort-select" aria-label="Sort wallpapers" style="padding:9px 16px;border-radius:999px;background:var(--card);border:1px solid var(--card-border);color:#fff;font-size:13.5px;font-weight:600;">
+        <option value="newest">Newest First</option>
+        <option value="downloads">Most Downloaded</option>
+        <option value="views">Most Viewed</option>
+        <option value="alpha">Alphabetical (A-Z)</option>
+      </select>
+      <select id="device-select" aria-label="Filter by device" style="padding:9px 16px;border-radius:999px;background:var(--card);border:1px solid var(--card-border);color:#fff;font-size:13.5px;font-weight:600;">
+        <option value="all">All Devices</option>
+        <option value="Mobile">Mobile</option>
+        <option value="Desktop">Desktop</option>
+        <option value="Both">Both</option>
+      </select>
+    </div>
   </div>
 </header>
 
@@ -191,10 +207,30 @@
 
     let list = cat === "all" ? wps : wps.filter(w => w.category === cat);
     if(q){
-      list = list.filter(w => (w.title||"").toLowerCase().includes(q) || (w.category||"").toLowerCase().includes(q));
+      list = list.filter(w =>
+        (w.title||"").toLowerCase().includes(q) ||
+        (w.category||"").toLowerCase().includes(q) ||
+        (w.tags||[]).some(t => t.toLowerCase().includes(q))
+      );
     }
+
+    const device = document.getElementById("device-select")?.value || "all";
+    if(device !== "all"){
+      list = list.filter(w => w.device === device);
+    }
+
+    const sort = document.getElementById("sort-select")?.value || "newest";
+    list = [...list];
+    if(sort === "downloads") list.sort((a,b) => (b.downloads||0)-(a.downloads||0));
+    else if(sort === "views") list.sort((a,b) => (b.views||0)-(a.views||0));
+    else if(sort === "alpha") list.sort((a,b) => (a.title||"").localeCompare(b.title||""));
+    // "newest" is already the default order from sbFetchWallpapers (created_at desc)
+
     renderWallpaperGrid("#wp-grid", list);
   }
+
+  document.getElementById("sort-select")?.addEventListener("change", loadCategory);
+  document.getElementById("device-select")?.addEventListener("change", loadCategory);
 
   sbApplyToPage()
     .catch(e=>console.error(e))
